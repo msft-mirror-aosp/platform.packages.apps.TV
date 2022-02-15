@@ -21,6 +21,7 @@ package {
 // See: http://go/android-license-faq
 license {
     name: "packages_apps_TV_license",
+    package_name: "Android Live TV App",
     visibility: [":__subpackages__"],
     license_kinds: [
         "SPDX-license-identifier-Apache-2.0",
