@@ -89,6 +89,9 @@ public class SampleTunerTvInputService extends TvInputService {
 
     @Override
     public TvInputSessionImpl onCreateSession(String inputId) {
+        if (DEBUG) {
+            Log.d(TAG, "onCreateSession(inputId=" + inputId + ")");
+        }
         return new TvInputSessionImpl(this);
     }
 
