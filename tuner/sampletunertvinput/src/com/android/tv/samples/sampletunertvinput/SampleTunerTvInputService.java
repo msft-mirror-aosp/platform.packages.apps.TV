@@ -14,6 +14,7 @@ import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.MediaEvent;
+import android.media.tv.tuner.filter.SectionSettingsWithSectionBits;
 import android.media.tv.tuner.filter.TsFilterConfiguration;
 import android.media.tv.tuner.frontend.AtscFrontendSettings;
 import android.media.tv.tuner.frontend.DvbtFrontendSettings;
@@ -44,6 +45,7 @@ public class SampleTunerTvInputService extends TvInputService {
 
     private static final int AUDIO_TPID = 257;
     private static final int VIDEO_TPID = 256;
+    private static final int SECTION_TPID = 255;
     private static final int STATUS_MASK = 0xf;
     private static final int LOW_THRESHOLD = 0x1000;
     private static final int HIGH_THRESHOLD = 0x07fff;
@@ -103,6 +105,7 @@ public class SampleTunerTvInputService extends TvInputService {
         private Surface mSurface;
         private Filter mAudioFilter;
         private Filter mVideoFilter;
+        private Filter mSectionFilter;
         private DvrPlayback mDvr;
         private Tuner mTuner;
         private MediaCodec mMediaCodec;
@@ -135,6 +138,9 @@ public class SampleTunerTvInputService extends TvInputService {
             }
             if (mVideoFilter != null) {
                 mVideoFilter.close();
+            }
+            if (mSectionFilter != null) {
+                mSectionFilter.close();
             }
             if (mDvr != null) {
                 mDvr.close();
@@ -263,6 +269,41 @@ public class SampleTunerTvInputService extends TvInputService {
             return videoFilter;
         }
 
+        private Filter sectionFilter() {
+            Filter sectionFilter = mTuner.openFilter(Filter.TYPE_TS, Filter.SUBTYPE_SECTION,
+                    FILTER_BUFFER_SIZE, new HandlerExecutor(mHandler),
+                    new FilterCallback() {
+                        @Override
+                        public void onFilterEvent(Filter filter, FilterEvent[] events) {
+                            if (DEBUG) {
+                                Log.d(TAG, "onFilterEvent section, size=" + events.length);
+                            }
+                            for (int i = 0; i < events.length; i++) {
+                                if (DEBUG) {
+                                    Log.d(TAG, "events[" + i + "] is "
+                                            + events[i].getClass().getSimpleName());
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onFilterStatusChanged(Filter filter, int status) {
+                            if (DEBUG) {
+                                Log.d(TAG, "onFilterEvent section, status=" + status);
+                            }
+                        }
+                    });
+
+            SectionSettingsWithSectionBits settings = SectionSettingsWithSectionBits
+                    .builder(Filter.TYPE_TS).build();
+
+            sectionFilter.configure(
+                    TsFilterConfiguration.builder().setTpid(SECTION_TPID)
+                            .setSettings(settings).build());
+
+            return sectionFilter;
+        }
+
         private DvrPlayback dvrPlayback() {
             DvrPlayback dvr = mTuner.openDvrPlayback(DVR_BUFFER_SIZE, new HandlerExecutor(mHandler),
                     status -> {
@@ -352,8 +393,10 @@ public class SampleTunerTvInputService extends TvInputService {
 
             mAudioFilter = audioFilter();
             mVideoFilter = videoFilter();
+            mSectionFilter = sectionFilter();
             mAudioFilter.start();
             mVideoFilter.start();
+            mSectionFilter.start();
             // use dvr playback to feed the data on platform without physical tuner
             mDvr = dvrPlayback();
             tune();
