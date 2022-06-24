@@ -79,6 +79,7 @@ public class SampleTunerTvInputSetupActivity extends Activity {
         Handler handler = new Handler(Looper.myLooper());
         mDvr = SampleTunerTvInputUtils.createDvrPlayback(mTuner, handler,
                 getApplicationContext(), ES_FILE_NAME);
+        SampleTunerTvInputUtils.tune(mTuner, handler, mDvr);
     }
 
 }

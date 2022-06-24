@@ -20,6 +20,7 @@ import android.content.Context;
 import android.media.tv.tuner.Tuner;
 import android.media.tv.tuner.dvr.DvrPlayback;
 import android.media.tv.tuner.dvr.DvrSettings;
+import android.media.tv.tuner.frontend.DvbtFrontendSettings;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.ParcelFileDescriptor;
@@ -37,6 +38,8 @@ public class SampleTunerTvInputUtils {
     private static final int HIGH_THRESHOLD = 0x07fff;
     private static final int DVR_BUFFER_SIZE = 4000000;
     private static final int PACKET_SIZE = 188;
+    private static final long FREQUENCY = 578000;
+    private static final int INPUT_FILE_MAX_SIZE = 700000;
 
     public static DvrPlayback createDvrPlayback(Tuner tuner, Handler handler,
             Context context, String fileName) {
@@ -70,5 +73,32 @@ public class SampleTunerTvInputUtils {
             Log.w(TAG, "File not existing");
         }
         return dvr;
+    }
+
+    public static void tune(Tuner tuner, Handler handler, DvrPlayback dvr) {
+        DvbtFrontendSettings feSettings = DvbtFrontendSettings.builder()
+                .setFrequencyLong(FREQUENCY)
+                .setTransmissionMode(DvbtFrontendSettings.TRANSMISSION_MODE_AUTO)
+                .setBandwidth(DvbtFrontendSettings.BANDWIDTH_8MHZ)
+                .setConstellation(DvbtFrontendSettings.CONSTELLATION_AUTO)
+                .setHierarchy(DvbtFrontendSettings.HIERARCHY_AUTO)
+                .setHighPriorityCodeRate(DvbtFrontendSettings.CODERATE_AUTO)
+                .setLowPriorityCodeRate(DvbtFrontendSettings.CODERATE_AUTO)
+                .setGuardInterval(DvbtFrontendSettings.GUARD_INTERVAL_AUTO)
+                .setHighPriority(true)
+                .setStandard(DvbtFrontendSettings.STANDARD_T)
+                .build();
+
+        tuner.setOnTuneEventListener(new HandlerExecutor(handler), tuneEvent -> {
+            if (DEBUG) {
+                Log.d(TAG, "onTuneEvent " + tuneEvent);
+            }
+            long read = dvr.read(INPUT_FILE_MAX_SIZE);
+            if (DEBUG) {
+                Log.d(TAG, "read=" + read);
+            }
+        });
+
+        tuner.tune(feSettings);
     }
 }

@@ -41,9 +41,7 @@ public class SampleTunerTvInputService extends TvInputService {
     private static final int AUDIO_TPID = 257;
     private static final int VIDEO_TPID = 256;
     private static final int SECTION_TPID = 255;
-    private static final int FREQUENCY = 578000;
     private static final int FILTER_BUFFER_SIZE = 16000000;
-    private static final int INPUT_FILE_MAX_SIZE = 700000;
 
     private static final int TIMEOUT_US = 100000;
     private static final boolean SAVE_DATA = false;
@@ -294,34 +292,6 @@ public class SampleTunerTvInputService extends TvInputService {
             return sectionFilter;
         }
 
-        private void tune() {
-            DvbtFrontendSettings feSettings = DvbtFrontendSettings.builder()
-                    .setFrequency(FREQUENCY)
-                    .setTransmissionMode(DvbtFrontendSettings.TRANSMISSION_MODE_AUTO)
-                    .setBandwidth(DvbtFrontendSettings.BANDWIDTH_8MHZ)
-                    .setConstellation(DvbtFrontendSettings.CONSTELLATION_AUTO)
-                    .setHierarchy(DvbtFrontendSettings.HIERARCHY_AUTO)
-                    .setHighPriorityCodeRate(DvbtFrontendSettings.CODERATE_AUTO)
-                    .setLowPriorityCodeRate(DvbtFrontendSettings.CODERATE_AUTO)
-                    .setGuardInterval(DvbtFrontendSettings.GUARD_INTERVAL_AUTO)
-                    .setHighPriority(true)
-                    .setStandard(DvbtFrontendSettings.STANDARD_T)
-                    .build();
-            mTuner.setOnTuneEventListener(new HandlerExecutor(mHandler), new OnTuneEventListener() {
-                @Override
-                public void onTuneEvent(int tuneEvent) {
-                    if (DEBUG) {
-                        Log.d(TAG, "onTuneEvent " + tuneEvent);
-                    }
-                    long read = mDvr.read(INPUT_FILE_MAX_SIZE);
-                    if (DEBUG) {
-                        Log.d(TAG, "read=" + read);
-                    }
-                }
-            });
-            mTuner.tune(feSettings);
-        }
-
         private boolean initCodec() {
             if (mMediaCodec != null) {
                 mMediaCodec.release();
@@ -357,7 +327,7 @@ public class SampleTunerTvInputService extends TvInputService {
             // use dvr playback to feed the data on platform without physical tuner
             mDvr = SampleTunerTvInputUtils.createDvrPlayback(mTuner, mHandler,
                     mContext, ES_FILE_NAME);
-            tune();
+            SampleTunerTvInputUtils.tune(mTuner, mHandler, mDvr);
             mDvr.start();
             mMediaCodec.start();
 
