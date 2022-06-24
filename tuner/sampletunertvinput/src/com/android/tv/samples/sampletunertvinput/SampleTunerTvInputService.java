@@ -8,7 +8,6 @@ import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.LinearBlock;
 import android.media.MediaFormat;
 import android.media.tv.tuner.dvr.DvrPlayback;
-import android.media.tv.tuner.dvr.DvrSettings;
 import android.media.tv.tuner.filter.AvSettings;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.FilterCallback;
@@ -16,20 +15,16 @@ import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.MediaEvent;
 import android.media.tv.tuner.filter.SectionSettingsWithSectionBits;
 import android.media.tv.tuner.filter.TsFilterConfiguration;
-import android.media.tv.tuner.frontend.AtscFrontendSettings;
 import android.media.tv.tuner.frontend.DvbtFrontendSettings;
-import android.media.tv.tuner.frontend.FrontendSettings;
 import android.media.tv.tuner.frontend.OnTuneEventListener;
 import android.media.tv.tuner.Tuner;
 import android.media.tv.TvInputService;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerExecutor;
-import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Surface;
-import java.io.File;
-import java.io.FileNotFoundException;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -46,14 +41,9 @@ public class SampleTunerTvInputService extends TvInputService {
     private static final int AUDIO_TPID = 257;
     private static final int VIDEO_TPID = 256;
     private static final int SECTION_TPID = 255;
-    private static final int STATUS_MASK = 0xf;
-    private static final int LOW_THRESHOLD = 0x1000;
-    private static final int HIGH_THRESHOLD = 0x07fff;
     private static final int FREQUENCY = 578000;
     private static final int FILTER_BUFFER_SIZE = 16000000;
-    private static final int DVR_BUFFER_SIZE = 4000000;
     private static final int INPUT_FILE_MAX_SIZE = 700000;
-    private static final int PACKET_SIZE = 188;
 
     private static final int TIMEOUT_US = 100000;
     private static final boolean SAVE_DATA = false;
@@ -304,39 +294,6 @@ public class SampleTunerTvInputService extends TvInputService {
             return sectionFilter;
         }
 
-        private DvrPlayback dvrPlayback() {
-            DvrPlayback dvr = mTuner.openDvrPlayback(DVR_BUFFER_SIZE, new HandlerExecutor(mHandler),
-                    status -> {
-                        if (DEBUG) {
-                            Log.d(TAG, "onPlaybackStatusChanged status=" + status);
-                        }
-                    });
-            int res = dvr.configure(
-                    DvrSettings.builder()
-                            .setStatusMask(STATUS_MASK)
-                            .setLowThreshold(LOW_THRESHOLD)
-                            .setHighThreshold(HIGH_THRESHOLD)
-                            .setDataFormat(DvrSettings.DATA_FORMAT_ES)
-                            .setPacketSize(PACKET_SIZE)
-                            .build());
-            if (DEBUG) {
-                Log.d(TAG, "config res=" + res);
-            }
-            String testFile = mContext.getFilesDir().getAbsolutePath() + "/" + ES_FILE_NAME;
-            File file = new File(testFile);
-            if (file.exists()) {
-                try {
-                    dvr.setFileDescriptor(
-                            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE));
-                } catch (FileNotFoundException e) {
-                        Log.e(TAG, "Failed to create FD");
-                }
-            } else {
-                Log.w(TAG, "File not existing");
-            }
-            return dvr;
-        }
-
         private void tune() {
             DvbtFrontendSettings feSettings = DvbtFrontendSettings.builder()
                     .setFrequency(FREQUENCY)
@@ -398,7 +355,8 @@ public class SampleTunerTvInputService extends TvInputService {
             mVideoFilter.start();
             mSectionFilter.start();
             // use dvr playback to feed the data on platform without physical tuner
-            mDvr = dvrPlayback();
+            mDvr = SampleTunerTvInputUtils.createDvrPlayback(mTuner, mHandler,
+                    mContext, ES_FILE_NAME);
             tune();
             mDvr.start();
             mMediaCodec.start();
