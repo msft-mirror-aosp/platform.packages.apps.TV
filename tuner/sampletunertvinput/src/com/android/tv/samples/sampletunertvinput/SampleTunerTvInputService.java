@@ -8,20 +8,14 @@ import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.LinearBlock;
 import android.media.MediaFormat;
 import android.media.tv.tuner.dvr.DvrPlayback;
-import android.media.tv.tuner.filter.AvSettings;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.MediaEvent;
-import android.media.tv.tuner.filter.SectionSettingsWithSectionBits;
-import android.media.tv.tuner.filter.TsFilterConfiguration;
-import android.media.tv.tuner.frontend.DvbtFrontendSettings;
-import android.media.tv.tuner.frontend.OnTuneEventListener;
 import android.media.tv.tuner.Tuner;
 import android.media.tv.TvInputService;
 import android.net.Uri;
 import android.os.Handler;
-import android.os.HandlerExecutor;
 import android.util.Log;
 import android.view.Surface;
 
@@ -37,11 +31,6 @@ import java.util.List;
 public class SampleTunerTvInputService extends TvInputService {
     private static final String TAG = "SampleTunerTvInput";
     private static final boolean DEBUG = true;
-
-    private static final int AUDIO_TPID = 257;
-    private static final int VIDEO_TPID = 256;
-    private static final int SECTION_TPID = 255;
-    private static final int FILTER_BUFFER_SIZE = 16000000;
 
     private static final int TIMEOUT_US = 100000;
     private static final boolean SAVE_DATA = false;
@@ -183,113 +172,38 @@ public class SampleTunerTvInputService extends TvInputService {
             }
         }
 
-        private Filter audioFilter() {
-            Filter audioFilter = mTuner.openFilter(Filter.TYPE_TS, Filter.SUBTYPE_AUDIO,
-                    FILTER_BUFFER_SIZE, new HandlerExecutor(mHandler),
-                    new FilterCallback() {
-                        @Override
-                        public void onFilterEvent(Filter filter, FilterEvent[] events) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent audio, size=" + events.length);
-                            }
-                            for (int i = 0; i < events.length; i++) {
-                                if (DEBUG) {
-                                    Log.d(TAG, "events[" + i + "] is "
-                                            + events[i].getClass().getSimpleName());
-                                }
+        private FilterCallback videoFilterCallback() {
+            return new FilterCallback() {
+                @Override
+                public void onFilterEvent(Filter filter, FilterEvent[] events) {
+                    if (DEBUG) {
+                        Log.d(TAG, "onFilterEvent video, size=" + events.length);
+                    }
+                    for (int i = 0; i < events.length; i++) {
+                        if (DEBUG) {
+                            Log.d(TAG, "events[" + i + "] is "
+                                    + events[i].getClass().getSimpleName());
+                        }
+                        if (events[i] instanceof MediaEvent) {
+                            MediaEvent me = (MediaEvent) events[i];
+                            mDataQueue.add(me);
+                            if (SAVE_DATA) {
+                                mSavedData.add(me);
                             }
                         }
+                    }
+                }
 
-                        @Override
-                        public void onFilterStatusChanged(Filter filter, int status) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent audio, status=" + status);
-                            }
-                        }
-                    });
-            AvSettings settings =
-                    AvSettings.builder(Filter.TYPE_TS, true).setPassthrough(false).build();
-            audioFilter.configure(
-                    TsFilterConfiguration.builder().setTpid(AUDIO_TPID)
-                            .setSettings(settings).build());
-            return audioFilter;
-        }
-
-        private Filter videoFilter() {
-            Filter videoFilter = mTuner.openFilter(Filter.TYPE_TS, Filter.SUBTYPE_VIDEO,
-                    FILTER_BUFFER_SIZE, new HandlerExecutor(mHandler),
-                    new FilterCallback() {
-                        @Override
-                        public void onFilterEvent(Filter filter, FilterEvent[] events) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent video, size=" + events.length);
-                            }
-                            for (int i = 0; i < events.length; i++) {
-                                if (DEBUG) {
-                                    Log.d(TAG, "events[" + i + "] is "
-                                            + events[i].getClass().getSimpleName());
-                                }
-                                if (events[i] instanceof MediaEvent) {
-                                    MediaEvent me = (MediaEvent) events[i];
-                                    mDataQueue.add(me);
-                                    if (SAVE_DATA) {
-                                        mSavedData.add(me);
-                                    }
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onFilterStatusChanged(Filter filter, int status) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent video, status=" + status);
-                            }
-                            if (status == Filter.STATUS_DATA_READY) {
-                                mDataReady = true;
-                            }
-                        }
-                    });
-            AvSettings settings =
-                    AvSettings.builder(Filter.TYPE_TS, false).setPassthrough(false).build();
-            videoFilter.configure(
-                    TsFilterConfiguration.builder().setTpid(VIDEO_TPID)
-                            .setSettings(settings).build());
-            return videoFilter;
-        }
-
-        private Filter sectionFilter() {
-            Filter sectionFilter = mTuner.openFilter(Filter.TYPE_TS, Filter.SUBTYPE_SECTION,
-                    FILTER_BUFFER_SIZE, new HandlerExecutor(mHandler),
-                    new FilterCallback() {
-                        @Override
-                        public void onFilterEvent(Filter filter, FilterEvent[] events) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent section, size=" + events.length);
-                            }
-                            for (int i = 0; i < events.length; i++) {
-                                if (DEBUG) {
-                                    Log.d(TAG, "events[" + i + "] is "
-                                            + events[i].getClass().getSimpleName());
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onFilterStatusChanged(Filter filter, int status) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent section, status=" + status);
-                            }
-                        }
-                    });
-
-            SectionSettingsWithSectionBits settings = SectionSettingsWithSectionBits
-                    .builder(Filter.TYPE_TS).build();
-
-            sectionFilter.configure(
-                    TsFilterConfiguration.builder().setTpid(SECTION_TPID)
-                            .setSettings(settings).build());
-
-            return sectionFilter;
+                @Override
+                public void onFilterStatusChanged(Filter filter, int status) {
+                    if (DEBUG) {
+                        Log.d(TAG, "onFilterEvent video, status=" + status);
+                    }
+                    if (status == Filter.STATUS_DATA_READY) {
+                        mDataReady = true;
+                    }
+                }
+            };
         }
 
         private boolean initCodec() {
@@ -318,9 +232,12 @@ public class SampleTunerTvInputService extends TvInputService {
             mTuner = new Tuner(mContext, mSessionId,
                     TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
 
-            mAudioFilter = audioFilter();
-            mVideoFilter = videoFilter();
-            mSectionFilter = sectionFilter();
+            mAudioFilter = SampleTunerTvInputUtils.createAvFilter(mTuner, mHandler,
+                    SampleTunerTvInputUtils.createDefaultLoggingFilterCallback("audio"), true);
+            mVideoFilter = SampleTunerTvInputUtils.createAvFilter(mTuner, mHandler,
+                    videoFilterCallback(), false);
+            mSectionFilter = SampleTunerTvInputUtils.createSectionFilter(mTuner, mHandler,
+                    SampleTunerTvInputUtils.createDefaultLoggingFilterCallback("section"));
             mAudioFilter.start();
             mVideoFilter.start();
             mSectionFilter.start();

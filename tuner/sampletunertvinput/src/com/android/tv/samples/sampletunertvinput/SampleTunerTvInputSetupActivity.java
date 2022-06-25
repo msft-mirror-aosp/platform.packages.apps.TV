@@ -6,6 +6,7 @@ import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputService;
 import android.media.tv.tuner.Tuner;
 import android.media.tv.tuner.dvr.DvrPlayback;
+import android.media.tv.tuner.filter.Filter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -21,6 +22,7 @@ public class SampleTunerTvInputSetupActivity extends Activity {
 
     private Tuner mTuner;
     private DvrPlayback mDvr;
+    private Filter mSectionFilter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -71,15 +73,25 @@ public class SampleTunerTvInputSetupActivity extends Activity {
             mDvr.close();
             mDvr = null;
         }
+        if (mSectionFilter != null) {
+            mSectionFilter.close();
+            mSectionFilter = null;
+        }
     }
 
     private void initTuner() {
         mTuner = new Tuner(getApplicationContext(), null,
                 TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
         Handler handler = new Handler(Looper.myLooper());
+
+        mSectionFilter = SampleTunerTvInputUtils.createSectionFilter(mTuner, handler,
+                SampleTunerTvInputUtils.createDefaultLoggingFilterCallback("section"));
+        mSectionFilter.start();
+
         mDvr = SampleTunerTvInputUtils.createDvrPlayback(mTuner, handler,
                 getApplicationContext(), ES_FILE_NAME);
         SampleTunerTvInputUtils.tune(mTuner, handler, mDvr);
+        mDvr.start();
     }
 
 }

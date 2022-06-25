@@ -20,6 +20,12 @@ import android.content.Context;
 import android.media.tv.tuner.Tuner;
 import android.media.tv.tuner.dvr.DvrPlayback;
 import android.media.tv.tuner.dvr.DvrSettings;
+import android.media.tv.tuner.filter.AvSettings;
+import android.media.tv.tuner.filter.Filter;
+import android.media.tv.tuner.filter.FilterCallback;
+import android.media.tv.tuner.filter.FilterEvent;
+import android.media.tv.tuner.filter.SectionSettingsWithSectionBits;
+import android.media.tv.tuner.filter.TsFilterConfiguration;
 import android.media.tv.tuner.frontend.DvbtFrontendSettings;
 import android.os.Handler;
 import android.os.HandlerExecutor;
@@ -32,6 +38,11 @@ import java.io.FileNotFoundException;
 public class SampleTunerTvInputUtils {
     private static final String TAG = "SampleTunerTvInput";
     private static final boolean DEBUG = true;
+
+    private static final int AUDIO_TPID = 257;
+    private static final int VIDEO_TPID = 256;
+    private static final int SECTION_TPID = 255;
+    private static final int FILTER_BUFFER_SIZE = 16000000;
 
     private static final int STATUS_MASK = 0xf;
     private static final int LOW_THRESHOLD = 0x1000;
@@ -100,5 +111,61 @@ public class SampleTunerTvInputUtils {
         });
 
         tuner.tune(feSettings);
+    }
+
+    public static Filter createSectionFilter(Tuner tuner, Handler handler,
+            FilterCallback callback) {
+        Filter sectionFilter = tuner.openFilter(Filter.TYPE_TS, Filter.SUBTYPE_SECTION,
+                FILTER_BUFFER_SIZE, new HandlerExecutor(handler), callback);
+
+        SectionSettingsWithSectionBits settings = SectionSettingsWithSectionBits
+                .builder(Filter.TYPE_TS).build();
+
+        sectionFilter.configure(
+                TsFilterConfiguration.builder().setTpid(SECTION_TPID)
+                        .setSettings(settings).build());
+
+        return sectionFilter;
+    }
+
+    public static Filter createAvFilter(Tuner tuner, Handler handler,
+            FilterCallback callback, boolean isAudio) {
+        Filter avFilter = tuner.openFilter(Filter.TYPE_TS,
+                isAudio ? Filter.SUBTYPE_AUDIO : Filter.SUBTYPE_VIDEO,
+                FILTER_BUFFER_SIZE,
+                new HandlerExecutor(handler),
+                callback);
+
+        AvSettings settings =
+                AvSettings.builder(Filter.TYPE_TS, isAudio).setPassthrough(false).build();
+        avFilter.configure(
+                TsFilterConfiguration.builder().
+                        setTpid(isAudio ? AUDIO_TPID : VIDEO_TPID)
+                        .setSettings(settings).build());
+        return avFilter;
+    }
+
+    public static FilterCallback createDefaultLoggingFilterCallback(String filterType) {
+        return new FilterCallback() {
+            @Override
+            public void onFilterEvent(Filter filter, FilterEvent[] events) {
+                if (DEBUG) {
+                    Log.d(TAG, "onFilterEvent " + filterType + ", size=" + events.length);
+                }
+                for (int i = 0; i < events.length; i++) {
+                    if (DEBUG) {
+                        Log.d(TAG, "events[" + i + "] is "
+                                + events[i].getClass().getSimpleName());
+                    }
+                }
+            }
+
+            @Override
+            public void onFilterStatusChanged(Filter filter, int status) {
+                if (DEBUG) {
+                    Log.d(TAG, "onFilterStatusChanged " + filterType + ", status=" + status);
+                }
+            }
+        };
     }
 }
