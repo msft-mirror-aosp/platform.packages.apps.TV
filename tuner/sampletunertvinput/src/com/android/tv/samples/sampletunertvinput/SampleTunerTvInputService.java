@@ -8,6 +8,7 @@ import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.LinearBlock;
 import android.media.MediaFormat;
 import android.media.tv.tuner.dvr.DvrPlayback;
+import android.media.tv.tuner.dvr.DvrSettings;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterEvent;
@@ -243,7 +244,7 @@ public class SampleTunerTvInputService extends TvInputService {
             mSectionFilter.start();
             // use dvr playback to feed the data on platform without physical tuner
             mDvr = SampleTunerTvInputUtils.createDvrPlayback(mTuner, mHandler,
-                    mContext, ES_FILE_NAME);
+                    mContext, ES_FILE_NAME, DvrSettings.DATA_FORMAT_ES);
             SampleTunerTvInputUtils.tune(mTuner, mHandler, mDvr);
             mDvr.start();
             mMediaCodec.start();

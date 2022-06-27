@@ -53,7 +53,7 @@ public class SampleTunerTvInputUtils {
     private static final int INPUT_FILE_MAX_SIZE = 700000;
 
     public static DvrPlayback createDvrPlayback(Tuner tuner, Handler handler,
-            Context context, String fileName) {
+            Context context, String fileName, int dataFormat) {
         DvrPlayback dvr = tuner.openDvrPlayback(DVR_BUFFER_SIZE, new HandlerExecutor(handler),
                 status -> {
                     if (DEBUG) {
@@ -65,7 +65,7 @@ public class SampleTunerTvInputUtils {
                         .setStatusMask(STATUS_MASK)
                         .setLowThreshold(LOW_THRESHOLD)
                         .setHighThreshold(HIGH_THRESHOLD)
-                        .setDataFormat(DvrSettings.DATA_FORMAT_ES)
+                        .setDataFormat(dataFormat)
                         .setPacketSize(PACKET_SIZE)
                         .build());
         if (DEBUG) {
