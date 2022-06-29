@@ -18,11 +18,14 @@ package com.android.tv.samples.sampletunertvinput;
 
 import android.util.Log;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Locale;
 
 /** Parser for ATSC PSIP sections */
 public class SampleTunerTvInputSectionParser {
     private static final String TAG = "SampleTunerTvInput";
+    private static final boolean DEBUG = true;
 
     /**
      * Parses a single TVCT section, as defined in A/65 6.4
@@ -33,8 +36,38 @@ public class SampleTunerTvInputSectionParser {
         if (!checkValidPsipSection(data)) {
             return null;
         }
-        // TODO: Parse the data for channel information
-        return new TvctChannelInfo("Sample Channel", 1, 1);
+        int numChannels = data[9] & 0xff;
+        if(numChannels != 1) {
+            Log.e(TAG, "parseTVCTSection expected 1 channel, found " + numChannels);
+            return null;
+        }
+        // TVCT Sections are a minimum of 16 bytes, with a minimum of 32 bytes per channel
+        if(data.length < 48) {
+            Log.e(TAG, "parseTVCTSection found section under minimum length");
+            return null;
+        }
+
+        // shortName begins at data[10] and ends at either the first stuffing
+        // UTF-16 character of value 0x0000, or at a length of 14 Bytes
+        int shortNameLength = 14;
+        for(int i = 0; i < 14; i += 2) {
+            int charValue = ((data[10 + i] & 0xff) << 8) | (data[10 + (i + 1)] & 0xff);
+            if (charValue == 0x0000) {
+                shortNameLength = i;
+                break;
+            }
+        }
+        // Data field positions are as defined by A/65 Section 6.4 for one channel
+        String shortName = new String(Arrays.copyOfRange(data, 10, 10 + shortNameLength),
+                        StandardCharsets.UTF_16);
+        int majorNumber = ((data[24] & 0x0f) << 6) | ((data[25] & 0xff) >> 2);
+        int minorNumber = ((data[25] & 0x03) << 8) | (data[26] & 0xff);
+        if (DEBUG) {
+            Log.d(TAG, "parseTVCTSection found shortName: " + shortName
+                    + " channel number: " + majorNumber + "-" + minorNumber);
+        }
+
+        return new TvctChannelInfo(shortName, majorNumber, minorNumber);
     }
 
     private static boolean checkValidPsipSection(byte[] data) {
