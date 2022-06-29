@@ -8,28 +8,17 @@ import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.LinearBlock;
 import android.media.MediaFormat;
 import android.media.tv.tuner.dvr.DvrPlayback;
-import android.media.tv.tuner.dvr.DvrSettings;
-import android.media.tv.tuner.filter.AvSettings;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.MediaEvent;
-import android.media.tv.tuner.filter.SectionSettingsWithSectionBits;
-import android.media.tv.tuner.filter.TsFilterConfiguration;
-import android.media.tv.tuner.frontend.AtscFrontendSettings;
-import android.media.tv.tuner.frontend.DvbtFrontendSettings;
-import android.media.tv.tuner.frontend.FrontendSettings;
-import android.media.tv.tuner.frontend.OnTuneEventListener;
 import android.media.tv.tuner.Tuner;
 import android.media.tv.TvInputService;
 import android.net.Uri;
 import android.os.Handler;
-import android.os.HandlerExecutor;
-import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Surface;
-import java.io.File;
-import java.io.FileNotFoundException;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -42,18 +31,6 @@ import java.util.List;
 public class SampleTunerTvInputService extends TvInputService {
     private static final String TAG = "SampleTunerTvInput";
     private static final boolean DEBUG = true;
-
-    private static final int AUDIO_TPID = 257;
-    private static final int VIDEO_TPID = 256;
-    private static final int SECTION_TPID = 255;
-    private static final int STATUS_MASK = 0xf;
-    private static final int LOW_THRESHOLD = 0x1000;
-    private static final int HIGH_THRESHOLD = 0x07fff;
-    private static final int FREQUENCY = 578000;
-    private static final int FILTER_BUFFER_SIZE = 16000000;
-    private static final int DVR_BUFFER_SIZE = 4000000;
-    private static final int INPUT_FILE_MAX_SIZE = 700000;
-    private static final int PACKET_SIZE = 188;
 
     private static final int TIMEOUT_US = 100000;
     private static final boolean SAVE_DATA = false;
@@ -195,174 +172,38 @@ public class SampleTunerTvInputService extends TvInputService {
             }
         }
 
-        private Filter audioFilter() {
-            Filter audioFilter = mTuner.openFilter(Filter.TYPE_TS, Filter.SUBTYPE_AUDIO,
-                    FILTER_BUFFER_SIZE, new HandlerExecutor(mHandler),
-                    new FilterCallback() {
-                        @Override
-                        public void onFilterEvent(Filter filter, FilterEvent[] events) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent audio, size=" + events.length);
-                            }
-                            for (int i = 0; i < events.length; i++) {
-                                if (DEBUG) {
-                                    Log.d(TAG, "events[" + i + "] is "
-                                            + events[i].getClass().getSimpleName());
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onFilterStatusChanged(Filter filter, int status) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent audio, status=" + status);
-                            }
-                        }
-                    });
-            AvSettings settings =
-                    AvSettings.builder(Filter.TYPE_TS, true).setPassthrough(false).build();
-            audioFilter.configure(
-                    TsFilterConfiguration.builder().setTpid(AUDIO_TPID)
-                            .setSettings(settings).build());
-            return audioFilter;
-        }
-
-        private Filter videoFilter() {
-            Filter videoFilter = mTuner.openFilter(Filter.TYPE_TS, Filter.SUBTYPE_VIDEO,
-                    FILTER_BUFFER_SIZE, new HandlerExecutor(mHandler),
-                    new FilterCallback() {
-                        @Override
-                        public void onFilterEvent(Filter filter, FilterEvent[] events) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent video, size=" + events.length);
-                            }
-                            for (int i = 0; i < events.length; i++) {
-                                if (DEBUG) {
-                                    Log.d(TAG, "events[" + i + "] is "
-                                            + events[i].getClass().getSimpleName());
-                                }
-                                if (events[i] instanceof MediaEvent) {
-                                    MediaEvent me = (MediaEvent) events[i];
-                                    mDataQueue.add(me);
-                                    if (SAVE_DATA) {
-                                        mSavedData.add(me);
-                                    }
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onFilterStatusChanged(Filter filter, int status) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent video, status=" + status);
-                            }
-                            if (status == Filter.STATUS_DATA_READY) {
-                                mDataReady = true;
-                            }
-                        }
-                    });
-            AvSettings settings =
-                    AvSettings.builder(Filter.TYPE_TS, false).setPassthrough(false).build();
-            videoFilter.configure(
-                    TsFilterConfiguration.builder().setTpid(VIDEO_TPID)
-                            .setSettings(settings).build());
-            return videoFilter;
-        }
-
-        private Filter sectionFilter() {
-            Filter sectionFilter = mTuner.openFilter(Filter.TYPE_TS, Filter.SUBTYPE_SECTION,
-                    FILTER_BUFFER_SIZE, new HandlerExecutor(mHandler),
-                    new FilterCallback() {
-                        @Override
-                        public void onFilterEvent(Filter filter, FilterEvent[] events) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent section, size=" + events.length);
-                            }
-                            for (int i = 0; i < events.length; i++) {
-                                if (DEBUG) {
-                                    Log.d(TAG, "events[" + i + "] is "
-                                            + events[i].getClass().getSimpleName());
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onFilterStatusChanged(Filter filter, int status) {
-                            if (DEBUG) {
-                                Log.d(TAG, "onFilterEvent section, status=" + status);
-                            }
-                        }
-                    });
-
-            SectionSettingsWithSectionBits settings = SectionSettingsWithSectionBits
-                    .builder(Filter.TYPE_TS).build();
-
-            sectionFilter.configure(
-                    TsFilterConfiguration.builder().setTpid(SECTION_TPID)
-                            .setSettings(settings).build());
-
-            return sectionFilter;
-        }
-
-        private DvrPlayback dvrPlayback() {
-            DvrPlayback dvr = mTuner.openDvrPlayback(DVR_BUFFER_SIZE, new HandlerExecutor(mHandler),
-                    status -> {
-                        if (DEBUG) {
-                            Log.d(TAG, "onPlaybackStatusChanged status=" + status);
-                        }
-                    });
-            int res = dvr.configure(
-                    DvrSettings.builder()
-                            .setStatusMask(STATUS_MASK)
-                            .setLowThreshold(LOW_THRESHOLD)
-                            .setHighThreshold(HIGH_THRESHOLD)
-                            .setDataFormat(DvrSettings.DATA_FORMAT_ES)
-                            .setPacketSize(PACKET_SIZE)
-                            .build());
-            if (DEBUG) {
-                Log.d(TAG, "config res=" + res);
-            }
-            String testFile = mContext.getFilesDir().getAbsolutePath() + "/" + ES_FILE_NAME;
-            File file = new File(testFile);
-            if (file.exists()) {
-                try {
-                    dvr.setFileDescriptor(
-                            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE));
-                } catch (FileNotFoundException e) {
-                        Log.e(TAG, "Failed to create FD");
-                }
-            } else {
-                Log.w(TAG, "File not existing");
-            }
-            return dvr;
-        }
-
-        private void tune() {
-            DvbtFrontendSettings feSettings = DvbtFrontendSettings.builder()
-                    .setFrequency(FREQUENCY)
-                    .setTransmissionMode(DvbtFrontendSettings.TRANSMISSION_MODE_AUTO)
-                    .setBandwidth(DvbtFrontendSettings.BANDWIDTH_8MHZ)
-                    .setConstellation(DvbtFrontendSettings.CONSTELLATION_AUTO)
-                    .setHierarchy(DvbtFrontendSettings.HIERARCHY_AUTO)
-                    .setHighPriorityCodeRate(DvbtFrontendSettings.CODERATE_AUTO)
-                    .setLowPriorityCodeRate(DvbtFrontendSettings.CODERATE_AUTO)
-                    .setGuardInterval(DvbtFrontendSettings.GUARD_INTERVAL_AUTO)
-                    .setHighPriority(true)
-                    .setStandard(DvbtFrontendSettings.STANDARD_T)
-                    .build();
-            mTuner.setOnTuneEventListener(new HandlerExecutor(mHandler), new OnTuneEventListener() {
+        private FilterCallback videoFilterCallback() {
+            return new FilterCallback() {
                 @Override
-                public void onTuneEvent(int tuneEvent) {
+                public void onFilterEvent(Filter filter, FilterEvent[] events) {
                     if (DEBUG) {
-                        Log.d(TAG, "onTuneEvent " + tuneEvent);
+                        Log.d(TAG, "onFilterEvent video, size=" + events.length);
                     }
-                    long read = mDvr.read(INPUT_FILE_MAX_SIZE);
-                    if (DEBUG) {
-                        Log.d(TAG, "read=" + read);
+                    for (int i = 0; i < events.length; i++) {
+                        if (DEBUG) {
+                            Log.d(TAG, "events[" + i + "] is "
+                                    + events[i].getClass().getSimpleName());
+                        }
+                        if (events[i] instanceof MediaEvent) {
+                            MediaEvent me = (MediaEvent) events[i];
+                            mDataQueue.add(me);
+                            if (SAVE_DATA) {
+                                mSavedData.add(me);
+                            }
+                        }
                     }
                 }
-            });
-            mTuner.tune(feSettings);
+
+                @Override
+                public void onFilterStatusChanged(Filter filter, int status) {
+                    if (DEBUG) {
+                        Log.d(TAG, "onFilterEvent video, status=" + status);
+                    }
+                    if (status == Filter.STATUS_DATA_READY) {
+                        mDataReady = true;
+                    }
+                }
+            };
         }
 
         private boolean initCodec() {
@@ -391,15 +232,19 @@ public class SampleTunerTvInputService extends TvInputService {
             mTuner = new Tuner(mContext, mSessionId,
                     TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
 
-            mAudioFilter = audioFilter();
-            mVideoFilter = videoFilter();
-            mSectionFilter = sectionFilter();
+            mAudioFilter = SampleTunerTvInputUtils.createAvFilter(mTuner, mHandler,
+                    SampleTunerTvInputUtils.createDefaultLoggingFilterCallback("audio"), true);
+            mVideoFilter = SampleTunerTvInputUtils.createAvFilter(mTuner, mHandler,
+                    videoFilterCallback(), false);
+            mSectionFilter = SampleTunerTvInputUtils.createSectionFilter(mTuner, mHandler,
+                    SampleTunerTvInputUtils.createDefaultLoggingFilterCallback("section"));
             mAudioFilter.start();
             mVideoFilter.start();
             mSectionFilter.start();
             // use dvr playback to feed the data on platform without physical tuner
-            mDvr = dvrPlayback();
-            tune();
+            mDvr = SampleTunerTvInputUtils.createDvrPlayback(mTuner, mHandler,
+                    mContext, ES_FILE_NAME);
+            SampleTunerTvInputUtils.tune(mTuner, mHandler, mDvr);
             mDvr.start();
             mMediaCodec.start();
 
