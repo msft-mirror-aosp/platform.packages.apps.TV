@@ -19,13 +19,17 @@ package com.android.tv.samples.sampletunertvinput;
 import android.util.Log;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 /** Parser for ATSC PSIP sections */
 public class SampleTunerTvInputSectionParser {
     private static final String TAG = "SampleTunerTvInput";
     private static final boolean DEBUG = true;
+
+    public static final byte DESCRIPTOR_TAG_EXTENDED_CHANNEL_NAME = (byte) 0xa0;
 
     /**
      * Parses a single TVCT section, as defined in A/65 6.4
@@ -58,16 +62,66 @@ public class SampleTunerTvInputSectionParser {
             }
         }
         // Data field positions are as defined by A/65 Section 6.4 for one channel
-        String shortName = new String(Arrays.copyOfRange(data, 10, 10 + shortNameLength),
+        String name = new String(Arrays.copyOfRange(data, 10, 10 + shortNameLength),
                         StandardCharsets.UTF_16);
         int majorNumber = ((data[24] & 0x0f) << 6) | ((data[25] & 0xff) >> 2);
         int minorNumber = ((data[25] & 0x03) << 8) | (data[26] & 0xff);
         if (DEBUG) {
-            Log.d(TAG, "parseTVCTSection found shortName: " + shortName
+            Log.d(TAG, "parseTVCTSection found shortName: " + name
                     + " channel number: " + majorNumber + "-" + minorNumber);
         }
+        int descriptorsLength = ((data[40] & 0x03) << 8) | (data[41] & 0xff);
+        List<TsDescriptor> descriptors = parseDescriptors(data, 42, 42 + descriptorsLength);
+        for (TsDescriptor descriptor : descriptors) {
+            if (descriptor instanceof ExtendedChannelNameDescriptor) {
+                ExtendedChannelNameDescriptor longNameDescriptor =
+                        (ExtendedChannelNameDescriptor)descriptor;
+                name = longNameDescriptor.getLongChannelName();
+            }
+        }
 
-        return new TvctChannelInfo(shortName, majorNumber, minorNumber);
+        return new TvctChannelInfo(name, majorNumber, minorNumber);
+    }
+
+    // Descriptor data structure defined in ISO/IEC 13818-1 Section 2.6
+    // Returns an empty list on parsing failures
+    private static List<TsDescriptor> parseDescriptors(byte[] data, int offset, int limit) {
+        List<TsDescriptor> descriptors = new ArrayList<>();
+        if (data.length < limit) {
+            Log.e(TAG, "parseDescriptors given limit larger than data");
+            return descriptors;
+        }
+        int pos = offset;
+        while (pos + 1 < limit) {
+            int tag = data[pos] & 0xff;
+            int length = data[pos + 1] & 0xff;
+            if (length <= 0) {
+                continue;
+            }
+            pos += 2;
+
+            if (limit < pos + length) {
+                Log.e(TAG, "parseDescriptors found descriptor with length longer than limit");
+                break;
+            }
+            if (DEBUG) {
+                Log.d(TAG, "parseDescriptors found descriptor with tag: " + tag);
+            }
+            TsDescriptor descriptor = null;
+            switch ((byte) tag) {
+                case DESCRIPTOR_TAG_EXTENDED_CHANNEL_NAME:
+                    // TODO: Parse ExtendedChannelNameDescriptor from data
+                    descriptor = new ExtendedChannelNameDescriptor("Sample");
+                    break;
+                default:
+                    break;
+            }
+            if (descriptor != null) {
+                descriptors.add(descriptor);
+            }
+            pos += length;
+        }
+        return descriptors;
     }
 
     private static boolean checkValidPsipSection(byte[] data) {
@@ -131,6 +185,31 @@ public class SampleTunerTvInputSectionParser {
                     mChannelName,
                     mMajorChannelNumber,
                     mMinorChannelNumber);
+        }
+    }
+
+    /**
+     * A base class for TS descriptors
+     * For details of their structure, see ATSC A/65 Section 6.9
+     */
+    public abstract static class TsDescriptor {
+        public abstract int getTag();
+    }
+
+    public static class ExtendedChannelNameDescriptor extends TsDescriptor {
+        private final String mLongChannelName;
+
+        public ExtendedChannelNameDescriptor(String longChannelName) {
+            mLongChannelName = longChannelName;
+        }
+
+        @Override
+        public int getTag() {
+            return DESCRIPTOR_TAG_EXTENDED_CHANNEL_NAME;
+        }
+
+        public String getLongChannelName() {
+            return mLongChannelName;
         }
     }
 }
