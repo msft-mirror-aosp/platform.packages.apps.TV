@@ -30,6 +30,8 @@ public class SampleTunerTvInputSectionParser {
     private static final boolean DEBUG = true;
 
     public static final byte DESCRIPTOR_TAG_EXTENDED_CHANNEL_NAME = (byte) 0xa0;
+    public static final byte COMPRESSION_TYPE_NO_COMPRESSION = (byte) 0x00;
+    public static final byte MODE_UTF16 = (byte) 0x3f;
 
     /**
      * Parses a single TVCT section, as defined in A/65 6.4
@@ -77,6 +79,9 @@ public class SampleTunerTvInputSectionParser {
                 ExtendedChannelNameDescriptor longNameDescriptor =
                         (ExtendedChannelNameDescriptor)descriptor;
                 name = longNameDescriptor.getLongChannelName();
+                if (DEBUG) {
+                    Log.d(TAG, "parseTVCTSection found longName: " + name);
+                }
             }
         }
 
@@ -110,8 +115,7 @@ public class SampleTunerTvInputSectionParser {
             TsDescriptor descriptor = null;
             switch ((byte) tag) {
                 case DESCRIPTOR_TAG_EXTENDED_CHANNEL_NAME:
-                    // TODO: Parse ExtendedChannelNameDescriptor from data
-                    descriptor = new ExtendedChannelNameDescriptor("Sample");
+                    descriptor = parseExtendedChannelNameDescriptor(data, pos, pos + length);
                     break;
                 default:
                     break;
@@ -122,6 +126,56 @@ public class SampleTunerTvInputSectionParser {
             pos += length;
         }
         return descriptors;
+    }
+
+    // ExtendedChannelNameDescriptor is defined in ATSC A/64 Section 6.9.4
+    // Returns first string segment with supported compression and mode
+    // Returns null on invalid data or no supported string segments
+    private static ExtendedChannelNameDescriptor parseExtendedChannelNameDescriptor(byte[] data,
+            int offset, int limit) {
+        if (limit < offset + 8) {
+            Log.e(TAG, "parseExtendedChannelNameDescriptor given too little data");
+            return null;
+        }
+
+        // Here we read the Multiple String Structure which is embedded in the Descriptor
+        // This data structure is defined in ATSC A/65 Section 6.10
+        int numStrings = data[offset] & 0xff;
+        if (numStrings <= 0) {
+            Log.e(TAG, "parseExtendedChannelNameDescriptor found no strings");
+            return null;
+        }
+        int pos = offset + 1;
+        for (int i = 0; i < numStrings; i++) {
+            if (limit < pos + 4) {
+                Log.e(TAG, "parseExtendedChannelNameDescriptor ran out of data");
+                return null;
+            }
+            int numSegments = data[pos + 3] & 0xff;
+            pos += 4;
+            for (int j = 0; j < numSegments; j++) {
+                if (limit < pos + 3) {
+                    Log.e(TAG, "parseExtendedChannelNameDescriptor ran out of data");
+                    return null;
+                }
+                int compressionType = data[pos] & 0xff;
+                int mode = data[pos + 1] & 0xff;
+                int numBytes = data[pos + 2] & 0xff;
+                pos += 3;
+                if (data.length < pos + numBytes) {
+                    Log.e(TAG, "parseExtendedChannelNameDescriptor ran out of data");
+                    return null;
+                }
+                if (compressionType == COMPRESSION_TYPE_NO_COMPRESSION && mode == MODE_UTF16) {
+                    return new ExtendedChannelNameDescriptor(new String(data, pos, numBytes,
+                            StandardCharsets.UTF_16));
+                }
+                pos += numBytes;
+            }
+        }
+
+        Log.e(TAG, "parseExtendedChannelNameDescriptor found no supported segments");
+        return null;
     }
 
     private static boolean checkValidPsipSection(byte[] data) {
