@@ -50,7 +50,7 @@ public class SampleTunerTvInputUtils {
     private static final int DVR_BUFFER_SIZE = 4000000;
     private static final int PACKET_SIZE = 188;
     private static final long FREQUENCY = 578000;
-    private static final int INPUT_FILE_MAX_SIZE = 700000;
+    private static final int INPUT_FILE_MAX_SIZE = 1000000;
 
     public static DvrPlayback createDvrPlayback(Tuner tuner, Handler handler,
             Context context, String fileName, int dataFormat) {

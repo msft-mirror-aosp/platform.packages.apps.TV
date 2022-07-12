@@ -35,21 +35,21 @@ public class SampleTunerTvInputService extends TvInputService {
 
     private static final int TIMEOUT_US = 100000;
     private static final boolean SAVE_DATA = false;
-    private static final String ES_FILE_NAME = "test.es";
+    private static final String MEDIA_INPUT_FILE_NAME = "media.ts";
     private static final MediaFormat VIDEO_FORMAT;
 
     static {
         // format extracted for the specific input file
-        VIDEO_FORMAT = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 320, 240);
+        VIDEO_FORMAT = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 360);
         VIDEO_FORMAT.setInteger(MediaFormat.KEY_TRACK_ID, 1);
-        VIDEO_FORMAT.setLong(MediaFormat.KEY_DURATION, 9933333);
-        VIDEO_FORMAT.setInteger(MediaFormat.KEY_LEVEL, 32);
+        VIDEO_FORMAT.setLong(MediaFormat.KEY_DURATION, 10000000);
+        VIDEO_FORMAT.setInteger(MediaFormat.KEY_LEVEL, 256);
         VIDEO_FORMAT.setInteger(MediaFormat.KEY_PROFILE, 65536);
         ByteBuffer csd = ByteBuffer.wrap(
-                new byte[] {0, 0, 0, 1, 103, 66, -64, 20, -38, 5, 7, -24, 64, 0, 0, 3, 0, 64, 0,
-                        0, 15, 35, -59, 10, -88});
+                new byte[] {0, 0, 0, 1, 103, 66, -64, 30, -39, 1, -32, -65, -27, -64, 68, 0, 0, 3,
+                        0, 4, 0, 0, 3, 0, -16, 60, 88, -71, 32});
         VIDEO_FORMAT.setByteBuffer("csd-0", csd);
-        csd = ByteBuffer.wrap(new byte[] {0, 0, 0, 1, 104, -50, 60, -128});
+        csd = ByteBuffer.wrap(new byte[] {0, 0, 0, 1, 104, -53, -125, -53, 32});
         VIDEO_FORMAT.setByteBuffer("csd-1", csd);
     }
 
@@ -244,7 +244,7 @@ public class SampleTunerTvInputService extends TvInputService {
             mSectionFilter.start();
             // use dvr playback to feed the data on platform without physical tuner
             mDvr = SampleTunerTvInputUtils.createDvrPlayback(mTuner, mHandler,
-                    mContext, ES_FILE_NAME, DvrSettings.DATA_FORMAT_ES);
+                    mContext, MEDIA_INPUT_FILE_NAME, DvrSettings.DATA_FORMAT_TS);
             SampleTunerTvInputUtils.tune(mTuner, mHandler, mDvr);
             mDvr.start();
             mMediaCodec.start();
