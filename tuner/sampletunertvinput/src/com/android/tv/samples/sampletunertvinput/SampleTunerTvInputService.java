@@ -90,6 +90,8 @@ public class SampleTunerTvInputService extends TvInputService {
         private Thread mDecoderThread;
         private Deque<MediaEvent> mDataQueue;
         private List<MediaEvent> mSavedData;
+        private long mCurrentLoopStartTimeUs = 0;
+        private long mLastFramePtsUs = 0;
         private boolean mDataReady = false;
 
 
@@ -342,6 +344,36 @@ public class SampleTunerTvInputService extends TvInputService {
             BufferInfo bufferInfo = new BufferInfo();
             int res = mMediaCodec.dequeueOutputBuffer(bufferInfo, TIMEOUT_US);
             if (res >= 0) {
+                long currentFramePtsUs = bufferInfo.presentationTimeUs;
+
+                // We know we are starting a new loop if the loop time is not set or if
+                // the current frame is before the last frame
+                if (mCurrentLoopStartTimeUs == 0 || currentFramePtsUs < mLastFramePtsUs) {
+                    mCurrentLoopStartTimeUs = System.nanoTime() / 1000;
+                }
+                mLastFramePtsUs = currentFramePtsUs;
+
+                long desiredUs = mCurrentLoopStartTimeUs + currentFramePtsUs;
+                long nowUs = System.nanoTime() / 1000;
+                long sleepTimeUs = desiredUs - nowUs;
+
+                if (DEBUG) {
+                    Log.d(TAG, "currentFramePts: " + currentFramePtsUs
+                            + " sleeping for: " + sleepTimeUs);
+                }
+                if (sleepTimeUs > 0) {
+                    try {
+                        Thread.sleep(
+                                /* millis */ sleepTimeUs / 1000,
+                                /* nanos */ (int) (sleepTimeUs % 1000) * 1000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        if (DEBUG) {
+                            Log.d(TAG, "InterruptedException:\n" + Log.getStackTraceString(e));
+                        }
+                        return;
+                    }
+                }
                 mMediaCodec.releaseOutputBuffer(res, true);
                 notifyVideoAvailable();
                 if (DEBUG) {
