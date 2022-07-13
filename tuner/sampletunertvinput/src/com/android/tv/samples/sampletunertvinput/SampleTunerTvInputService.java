@@ -2,11 +2,14 @@ package com.android.tv.samples.sampletunertvinput;
 
 import static android.media.tv.TvInputManager.VIDEO_UNAVAILABLE_REASON_UNKNOWN;
 
+import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.LinearBlock;
 import android.media.MediaFormat;
+import android.media.tv.TvContract;
 import android.media.tv.tuner.dvr.DvrPlayback;
 import android.media.tv.tuner.dvr.DvrSettings;
 import android.media.tv.tuner.filter.Filter;
@@ -20,6 +23,8 @@ import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Surface;
+
+import com.android.tv.common.util.Clock;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -57,6 +62,7 @@ public class SampleTunerTvInputService extends TvInputService {
     public static final String INPUT_ID =
             "com.android.tv.samples.sampletunertvinput/.SampleTunerTvInputService";
     private String mSessionId;
+    private Uri mChannelUri;
 
     @Override
     public TvInputSessionImpl onCreateSession(String inputId, String sessionId) {
@@ -160,6 +166,7 @@ public class SampleTunerTvInputService extends TvInputService {
                 Log.e(TAG, "null codec!");
                 return false;
             }
+            mChannelUri = uri;
             mHandler = new Handler();
             mDecoderThread =
                     new Thread(
@@ -312,11 +319,37 @@ public class SampleTunerTvInputService extends TvInputService {
             }
         }
 
-
         private void handleSection(byte[] data) {
             SampleTunerTvInputSectionParser.EitEventInfo eventInfo =
                     SampleTunerTvInputSectionParser.parseEitSection(data);
-            // TODO: Update current program with our event information
+            if (eventInfo == null) {
+                Log.e(TAG, "Did not receive event info from parser");
+                return;
+            }
+
+            // We assume that our program starts at the current time
+            long startTimeMs = Clock.SYSTEM.currentTimeMillis();
+            long endTimeMs = startTimeMs + ((long)eventInfo.getLengthSeconds() * 1000);
+
+            // Remove any other programs which conflict with our start and end time
+            Uri conflictsUri =
+                    TvContract.buildProgramsUriForChannel(mChannelUri, startTimeMs, endTimeMs);
+            int programsDeleted = mContext.getContentResolver().delete(conflictsUri, null, null);
+            if (DEBUG) {
+                Log.d(TAG, "Deleted " + programsDeleted + " conflicting program(s)");
+            }
+
+            // Insert our new program into the newly opened time slot
+            ContentValues values = new ContentValues();
+            values.put(TvContract.Programs.COLUMN_CHANNEL_ID, ContentUris.parseId(mChannelUri));
+            values.put(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS, startTimeMs);
+            values.put(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS, endTimeMs);
+            values.put(TvContract.Programs.COLUMN_TITLE, eventInfo.getEventTitle());
+            values.put(TvContract.Programs.COLUMN_SHORT_DESCRIPTION, "");
+            if (DEBUG) {
+                Log.d(TAG, "Inserting program with values: " + values);
+            }
+            mContext.getContentResolver().insert(TvContract.Programs.CONTENT_URI, values);
         }
 
         private boolean handleDataBuffer(MediaEvent mediaEvent) {
