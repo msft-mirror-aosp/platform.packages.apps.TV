@@ -88,6 +88,20 @@ public class SampleTunerTvInputSectionParser {
         return new TvctChannelInfo(name, majorNumber, minorNumber);
     }
 
+    /**
+     * Parses a single EIT section, as defined in ATSC A/65 Section 6.5
+     * @param data, a byte array containing a single EIT section which describes only one event
+     * @return {@code null} if there is an error while parsing, the event with parsed data otherwise
+     */
+    public static EitEventInfo parseEitSection(byte[] data) {
+        if (!checkValidPsipSection(data)) {
+            return null;
+        }
+        // TODO: Parse data and replace sample values
+        return new EitEventInfo("Sample Title", 3600);
+    }
+
+
     // Descriptor data structure defined in ISO/IEC 13818-1 Section 2.6
     // Returns an empty list on parsing failures
     private static List<TsDescriptor> parseDescriptors(byte[] data, int offset, int limit) {
@@ -239,6 +253,39 @@ public class SampleTunerTvInputSectionParser {
                     mChannelName,
                     mMajorChannelNumber,
                     mMinorChannelNumber);
+        }
+    }
+
+    /**
+     * Contains the portion of the data contained in the EIT used by
+     * our SampleTunerTvInputService
+     */
+    public static class EitEventInfo {
+        private final String mEventTitle;
+        private final int mLengthSeconds;
+
+        public EitEventInfo(
+                String eventTitle,
+                int lengthSeconds) {
+            mEventTitle = eventTitle;
+            mLengthSeconds = lengthSeconds;
+        }
+
+        public String getEventTitle() {
+            return mEventTitle;
+        }
+
+        public int getLengthSeconds() {
+            return mLengthSeconds;
+        }
+
+        @Override
+        public String toString() {
+            return String.format(
+                    Locale.US,
+                    "Event Title: %s Length in Seconds: %d",
+                    mEventTitle,
+                    mLengthSeconds);
         }
     }
 

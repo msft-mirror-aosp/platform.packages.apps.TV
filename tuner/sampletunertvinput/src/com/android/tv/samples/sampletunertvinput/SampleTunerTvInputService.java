@@ -314,7 +314,9 @@ public class SampleTunerTvInputService extends TvInputService {
 
 
         private void handleSection(byte[] data) {
-            // TODO: Parse received section
+            SampleTunerTvInputSectionParser.EitEventInfo eventInfo =
+                    SampleTunerTvInputSectionParser.parseEitSection(data);
+            // TODO: Update current program with our event information
         }
 
         private boolean handleDataBuffer(MediaEvent mediaEvent) {
