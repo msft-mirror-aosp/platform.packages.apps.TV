@@ -15,6 +15,7 @@ import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.MediaEvent;
 import android.media.tv.tuner.Tuner;
 import android.media.tv.TvInputService;
+import android.media.tv.tuner.filter.SectionEvent;
 import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
@@ -209,6 +210,42 @@ public class SampleTunerTvInputService extends TvInputService {
             };
         }
 
+        private FilterCallback sectionFilterCallback() {
+            return new FilterCallback() {
+                @Override
+                public void onFilterEvent(Filter filter, FilterEvent[] events) {
+                    if (DEBUG) {
+                        Log.d(TAG, "onFilterEvent section, size=" + events.length);
+                    }
+                    for (int i = 0; i < events.length; i++) {
+                        if (DEBUG) {
+                            Log.d(TAG, "events[" + i + "] is "
+                                    + events[i].getClass().getSimpleName());
+                        }
+                        if (events[i] instanceof SectionEvent) {
+                            SectionEvent sectionEvent = (SectionEvent) events[i];
+                            int dataSize = (int)sectionEvent.getDataLengthLong();
+                            if (DEBUG) {
+                                Log.d(TAG, "section dataSize:" + dataSize);
+                            }
+
+                            byte[] data = new byte[dataSize];
+                            filter.read(data, 0, dataSize);
+
+                            handleSection(data);
+                        }
+                    }
+                }
+
+                @Override
+                public void onFilterStatusChanged(Filter filter, int status) {
+                    if (DEBUG) {
+                        Log.d(TAG, "onFilterStatusChanged section, status=" + status);
+                    }
+                }
+            };
+        }
+
         private boolean initCodec() {
             if (mMediaCodec != null) {
                 mMediaCodec.release();
@@ -240,7 +277,7 @@ public class SampleTunerTvInputService extends TvInputService {
             mVideoFilter = SampleTunerTvInputUtils.createAvFilter(mTuner, mHandler,
                     videoFilterCallback(), false);
             mSectionFilter = SampleTunerTvInputUtils.createSectionFilter(mTuner, mHandler,
-                    SampleTunerTvInputUtils.createDefaultLoggingFilterCallback("section"));
+                    sectionFilterCallback());
             mAudioFilter.start();
             mVideoFilter.start();
             mSectionFilter.start();
@@ -273,6 +310,11 @@ public class SampleTunerTvInputService extends TvInputService {
             } catch (Exception e) {
                 Log.e(TAG, "Error in decodeInternal: " + e.getMessage());
             }
+        }
+
+
+        private void handleSection(byte[] data) {
+            // TODO: Parse received section
         }
 
         private boolean handleDataBuffer(MediaEvent mediaEvent) {
