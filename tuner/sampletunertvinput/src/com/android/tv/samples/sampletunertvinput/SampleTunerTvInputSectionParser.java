@@ -142,34 +142,40 @@ public class SampleTunerTvInputSectionParser {
         return descriptors;
     }
 
-    // ExtendedChannelNameDescriptor is defined in ATSC A/64 Section 6.9.4
-    // Returns first string segment with supported compression and mode
-    // Returns null on invalid data or no supported string segments
+    // ExtendedChannelNameDescriptor is defined in ATSC A/65 Section 6.9.4 as containing only
+    // a single MultipleStringStructure after its tag and length.
+    // @return {@code null} if parsing MultipleStringStructure fails
     private static ExtendedChannelNameDescriptor parseExtendedChannelNameDescriptor(byte[] data,
             int offset, int limit) {
+        String channelName = parseMultipleStringStructure(data, offset, limit);
+        return channelName == null ? null : new ExtendedChannelNameDescriptor(channelName);
+    }
+
+    // MultipleStringStructure is defined in ATSC A/65 Section 6.10
+    // Returns first string segment with supported compression and mode
+    // @return {@code null} on invalid data or no supported string segments
+    private static String parseMultipleStringStructure(byte[] data, int offset, int limit) {
         if (limit < offset + 8) {
-            Log.e(TAG, "parseExtendedChannelNameDescriptor given too little data");
+            Log.e(TAG, "parseMultipleStringStructure given too little data");
             return null;
         }
 
-        // Here we read the Multiple String Structure which is embedded in the Descriptor
-        // This data structure is defined in ATSC A/65 Section 6.10
         int numStrings = data[offset] & 0xff;
         if (numStrings <= 0) {
-            Log.e(TAG, "parseExtendedChannelNameDescriptor found no strings");
+            Log.e(TAG, "parseMultipleStringStructure found no strings");
             return null;
         }
         int pos = offset + 1;
         for (int i = 0; i < numStrings; i++) {
             if (limit < pos + 4) {
-                Log.e(TAG, "parseExtendedChannelNameDescriptor ran out of data");
+                Log.e(TAG, "parseMultipleStringStructure ran out of data");
                 return null;
             }
             int numSegments = data[pos + 3] & 0xff;
             pos += 4;
             for (int j = 0; j < numSegments; j++) {
                 if (limit < pos + 3) {
-                    Log.e(TAG, "parseExtendedChannelNameDescriptor ran out of data");
+                    Log.e(TAG, "parseMultipleStringStructure ran out of data");
                     return null;
                 }
                 int compressionType = data[pos] & 0xff;
@@ -177,18 +183,17 @@ public class SampleTunerTvInputSectionParser {
                 int numBytes = data[pos + 2] & 0xff;
                 pos += 3;
                 if (data.length < pos + numBytes) {
-                    Log.e(TAG, "parseExtendedChannelNameDescriptor ran out of data");
+                    Log.e(TAG, "parseMultipleStringStructure ran out of data");
                     return null;
                 }
                 if (compressionType == COMPRESSION_TYPE_NO_COMPRESSION && mode == MODE_UTF16) {
-                    return new ExtendedChannelNameDescriptor(new String(data, pos, numBytes,
-                            StandardCharsets.UTF_16));
+                    return new String(data, pos, numBytes, StandardCharsets.UTF_16);
                 }
                 pos += numBytes;
             }
         }
 
-        Log.e(TAG, "parseExtendedChannelNameDescriptor found no supported segments");
+        Log.e(TAG, "parseMultipleStringStructure found no supported segments");
         return null;
     }
 
