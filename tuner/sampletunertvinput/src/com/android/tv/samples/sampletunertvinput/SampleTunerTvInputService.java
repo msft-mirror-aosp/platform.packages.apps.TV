@@ -263,7 +263,10 @@ public class SampleTunerTvInputService extends TvInputService {
                             mDataQueue.pollFirst();
                         }
                     }
-                    if (SAVE_DATA) {
+                    else if (SAVE_DATA) {
+                        if (DEBUG) {
+                            Log.d(TAG, "Adding saved data to data queue");
+                        }
                         mDataQueue.addAll(mSavedData);
                     }
                 }
