@@ -28,7 +28,7 @@ public class SampleTunerTvInputSetupActivity extends Activity {
     private static final String TAG = "SampleTunerTvInput";
     private static final boolean DEBUG = true;
 
-    private static final String ES_FILE_NAME = "test.ts";
+    private static final String SETUP_INPUT_FILE_NAME = "setup.ts";
 
     private Tuner mTuner;
     private DvrPlayback mDvr;
@@ -151,7 +151,7 @@ public class SampleTunerTvInputSetupActivity extends Activity {
         mSectionFilter.start();
 
         mDvr = SampleTunerTvInputUtils.createDvrPlayback(mTuner, handler,
-                getApplicationContext(), ES_FILE_NAME, DvrSettings.DATA_FORMAT_TS);
+                getApplicationContext(), SETUP_INPUT_FILE_NAME, DvrSettings.DATA_FORMAT_TS);
         SampleTunerTvInputUtils.tune(mTuner, handler, mDvr);
         mDvr.start();
     }
