@@ -97,8 +97,28 @@ public class SampleTunerTvInputSectionParser {
         if (!checkValidPsipSection(data)) {
             return null;
         }
-        // TODO: Parse data and replace sample values
-        return new EitEventInfo("Sample Title", 3600);
+        int numEvents = data[9] & 0xff;
+        if(numEvents != 1) {
+            Log.e(TAG, "parseEitSection expected 1 event, found " + numEvents);
+            return null;
+        }
+        // EIT Sections are a minimum of 14 bytes, with a minimum of 12 bytes per event
+        if(data.length < 26) {
+            Log.e(TAG, "parseEitSection found section under minimum length");
+            return null;
+        }
+
+        // Data field positions are as defined by A/65 Section 6.5 for one event
+        int lengthInSeconds = ((data[16] & 0x0f) << 16) | ((data[17] & 0xff) << 8)
+                | (data[18] & 0xff);
+        int titleLength = data[19] & 0xff;
+        String titleText = parseMultipleStringStructure(data, 20, 20 + titleLength);
+
+        if (DEBUG) {
+            Log.d(TAG, "parseEitSection found titleText: " + titleText
+                    + " lengthInSeconds: " + lengthInSeconds);
+        }
+        return new EitEventInfo(titleText, lengthInSeconds);
     }
 
 
