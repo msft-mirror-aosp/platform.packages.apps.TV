@@ -16,12 +16,15 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import com.android.tv.common.util.Clock;
 import com.android.tv.testing.data.ChannelInfo;
 import com.android.tv.testing.data.ChannelUtils;
 import com.android.tv.testing.data.ProgramInfo;
+import com.android.tv.testing.data.ProgramUtils;
 
 import java.util.Collections;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 /** Setup activity for SampleTunerTvInput */
 public class SampleTunerTvInputSetupActivity extends Activity {
@@ -83,23 +86,13 @@ public class SampleTunerTvInputSetupActivity extends Activity {
                         .setAudioChannel(2)
                         .setAudioLanguageCount(1)
                         .setHasClosedCaption(false)
-                        .setProgram(
-                                new ProgramInfo(
-                                        "Sample Program",
-                                        "",
-                                        0,
-                                        0,
-                                        ProgramInfo.GEN_POSTER,
-                                        "Sample description",
-                                        ProgramInfo.GEN_DURATION,
-                                        null,
-                                        ProgramInfo.GEN_GENRE,
-                                        null))
                         .build();
 
         Intent intent = getIntent();
         String inputId = intent.getStringExtra(TvInputInfo.EXTRA_INPUT_ID);
         ChannelUtils.updateChannels(this, inputId, Collections.singletonList(channel));
+        ProgramUtils.updateProgramForAllChannelsOf(this, inputId, Clock.SYSTEM,
+                TimeUnit.DAYS.toMillis(1));
 
         setResult(Activity.RESULT_OK);
         finish();
