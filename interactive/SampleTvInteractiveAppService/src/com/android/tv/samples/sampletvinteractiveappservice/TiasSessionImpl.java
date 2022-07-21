@@ -17,7 +17,9 @@
 package com.android.tv.samples.sampletvinteractiveappservice;
 
 import android.content.Context;
+import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppService;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Surface;
 
@@ -25,8 +27,17 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
     private static final String TAG = "SampleTvInteractiveAppService";
     private static final boolean DEBUG = true;
 
-    public TiasSessionImpl(Context context) {
+    private final Handler mHandler;
+    private final int mType;
+
+    public TiasSessionImpl(Context context, String iAppServiceId, int type) {
         super(context);
+        if (DEBUG) {
+            Log.d(TAG, "Constructing service with iAppServiceId=" + iAppServiceId
+                    + " type=" + type);
+        }
+        mType = type;
+        mHandler = new Handler(context.getMainLooper());
     }
 
     @Override
@@ -42,5 +53,32 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
             Log.d(TAG, "onSetSurface");
         }
         return false;
+    }
+
+    @Override
+    public void onStartInteractiveApp() {
+        if (DEBUG) {
+            Log.d(TAG, "onStartInteractiveApp");
+        }
+    }
+
+    @Override
+    public void onStopInteractiveApp() {
+        if (DEBUG) {
+            Log.d(TAG, "onStopInteractiveApp");
+        }
+    }
+
+    public void prepare(TvInteractiveAppService serviceCaller) {
+        // Slightly delay our post to ensure the Manager has had time to register our Session
+        mHandler.postDelayed(
+                () -> {
+                    if (serviceCaller != null) {
+                        serviceCaller.notifyStateChanged(mType,
+                                TvInteractiveAppManager.SERVICE_STATE_READY,
+                                TvInteractiveAppManager.ERROR_NONE);
+                    }
+                },
+                100);
     }
 }

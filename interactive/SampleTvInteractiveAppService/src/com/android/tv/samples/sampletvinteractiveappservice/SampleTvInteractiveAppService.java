@@ -32,6 +32,8 @@ public class SampleTvInteractiveAppService extends TvInteractiveAppService {
         if (DEBUG) {
             Log.d(TAG, "onCreateSession iAppServiceId=" + iAppServiceId + "type=" + type);
         }
-        return new TiasSessionImpl(this);
+        TiasSessionImpl session = new TiasSessionImpl(this, iAppServiceId, type);
+        session.prepare(this);
+        return session;
     }
 }
