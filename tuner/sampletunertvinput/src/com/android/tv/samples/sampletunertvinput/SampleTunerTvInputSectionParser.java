@@ -88,6 +88,40 @@ public class SampleTunerTvInputSectionParser {
         return new TvctChannelInfo(name, majorNumber, minorNumber);
     }
 
+    /**
+     * Parses a single EIT section, as defined in ATSC A/65 Section 6.5
+     * @param data, a byte array containing a single EIT section which describes only one event
+     * @return {@code null} if there is an error while parsing, the event with parsed data otherwise
+     */
+    public static EitEventInfo parseEitSection(byte[] data) {
+        if (!checkValidPsipSection(data)) {
+            return null;
+        }
+        int numEvents = data[9] & 0xff;
+        if(numEvents != 1) {
+            Log.e(TAG, "parseEitSection expected 1 event, found " + numEvents);
+            return null;
+        }
+        // EIT Sections are a minimum of 14 bytes, with a minimum of 12 bytes per event
+        if(data.length < 26) {
+            Log.e(TAG, "parseEitSection found section under minimum length");
+            return null;
+        }
+
+        // Data field positions are as defined by A/65 Section 6.5 for one event
+        int lengthInSeconds = ((data[16] & 0x0f) << 16) | ((data[17] & 0xff) << 8)
+                | (data[18] & 0xff);
+        int titleLength = data[19] & 0xff;
+        String titleText = parseMultipleStringStructure(data, 20, 20 + titleLength);
+
+        if (DEBUG) {
+            Log.d(TAG, "parseEitSection found titleText: " + titleText
+                    + " lengthInSeconds: " + lengthInSeconds);
+        }
+        return new EitEventInfo(titleText, lengthInSeconds);
+    }
+
+
     // Descriptor data structure defined in ISO/IEC 13818-1 Section 2.6
     // Returns an empty list on parsing failures
     private static List<TsDescriptor> parseDescriptors(byte[] data, int offset, int limit) {
@@ -128,34 +162,40 @@ public class SampleTunerTvInputSectionParser {
         return descriptors;
     }
 
-    // ExtendedChannelNameDescriptor is defined in ATSC A/64 Section 6.9.4
-    // Returns first string segment with supported compression and mode
-    // Returns null on invalid data or no supported string segments
+    // ExtendedChannelNameDescriptor is defined in ATSC A/65 Section 6.9.4 as containing only
+    // a single MultipleStringStructure after its tag and length.
+    // @return {@code null} if parsing MultipleStringStructure fails
     private static ExtendedChannelNameDescriptor parseExtendedChannelNameDescriptor(byte[] data,
             int offset, int limit) {
+        String channelName = parseMultipleStringStructure(data, offset, limit);
+        return channelName == null ? null : new ExtendedChannelNameDescriptor(channelName);
+    }
+
+    // MultipleStringStructure is defined in ATSC A/65 Section 6.10
+    // Returns first string segment with supported compression and mode
+    // @return {@code null} on invalid data or no supported string segments
+    private static String parseMultipleStringStructure(byte[] data, int offset, int limit) {
         if (limit < offset + 8) {
-            Log.e(TAG, "parseExtendedChannelNameDescriptor given too little data");
+            Log.e(TAG, "parseMultipleStringStructure given too little data");
             return null;
         }
 
-        // Here we read the Multiple String Structure which is embedded in the Descriptor
-        // This data structure is defined in ATSC A/65 Section 6.10
         int numStrings = data[offset] & 0xff;
         if (numStrings <= 0) {
-            Log.e(TAG, "parseExtendedChannelNameDescriptor found no strings");
+            Log.e(TAG, "parseMultipleStringStructure found no strings");
             return null;
         }
         int pos = offset + 1;
         for (int i = 0; i < numStrings; i++) {
             if (limit < pos + 4) {
-                Log.e(TAG, "parseExtendedChannelNameDescriptor ran out of data");
+                Log.e(TAG, "parseMultipleStringStructure ran out of data");
                 return null;
             }
             int numSegments = data[pos + 3] & 0xff;
             pos += 4;
             for (int j = 0; j < numSegments; j++) {
                 if (limit < pos + 3) {
-                    Log.e(TAG, "parseExtendedChannelNameDescriptor ran out of data");
+                    Log.e(TAG, "parseMultipleStringStructure ran out of data");
                     return null;
                 }
                 int compressionType = data[pos] & 0xff;
@@ -163,18 +203,17 @@ public class SampleTunerTvInputSectionParser {
                 int numBytes = data[pos + 2] & 0xff;
                 pos += 3;
                 if (data.length < pos + numBytes) {
-                    Log.e(TAG, "parseExtendedChannelNameDescriptor ran out of data");
+                    Log.e(TAG, "parseMultipleStringStructure ran out of data");
                     return null;
                 }
                 if (compressionType == COMPRESSION_TYPE_NO_COMPRESSION && mode == MODE_UTF16) {
-                    return new ExtendedChannelNameDescriptor(new String(data, pos, numBytes,
-                            StandardCharsets.UTF_16));
+                    return new String(data, pos, numBytes, StandardCharsets.UTF_16);
                 }
                 pos += numBytes;
             }
         }
 
-        Log.e(TAG, "parseExtendedChannelNameDescriptor found no supported segments");
+        Log.e(TAG, "parseMultipleStringStructure found no supported segments");
         return null;
     }
 
@@ -239,6 +278,39 @@ public class SampleTunerTvInputSectionParser {
                     mChannelName,
                     mMajorChannelNumber,
                     mMinorChannelNumber);
+        }
+    }
+
+    /**
+     * Contains the portion of the data contained in the EIT used by
+     * our SampleTunerTvInputService
+     */
+    public static class EitEventInfo {
+        private final String mEventTitle;
+        private final int mLengthSeconds;
+
+        public EitEventInfo(
+                String eventTitle,
+                int lengthSeconds) {
+            mEventTitle = eventTitle;
+            mLengthSeconds = lengthSeconds;
+        }
+
+        public String getEventTitle() {
+            return mEventTitle;
+        }
+
+        public int getLengthSeconds() {
+            return mLengthSeconds;
+        }
+
+        @Override
+        public String toString() {
+            return String.format(
+                    Locale.US,
+                    "Event Title: %s Length in Seconds: %d",
+                    mEventTitle,
+                    mLengthSeconds);
         }
     }
 
