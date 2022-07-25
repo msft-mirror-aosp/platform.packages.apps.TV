@@ -16,14 +16,22 @@
 
 package com.android.tv.samples.sampletvinteractiveappservice;
 
+import android.app.Presentation;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
 import android.media.tv.TvTrackInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppService;
 import android.net.Uri;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Surface;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import java.util.List;
 
@@ -31,8 +39,14 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
     private static final String TAG = "SampleTvInteractiveAppService";
     private static final boolean DEBUG = true;
 
+    private static final String VIRTUAL_DISPLAY_NAME = "sample_tias_display";
+
+    private final Context mContext;
     private final Handler mHandler;
     private final int mType;
+    private final ViewGroup mViewContainer;
+    private Surface mSurface;
+    private VirtualDisplay mVirtualDisplay;
 
     public TiasSessionImpl(Context context, String iAppServiceId, int type) {
         super(context);
@@ -40,14 +54,27 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
             Log.d(TAG, "Constructing service with iAppServiceId=" + iAppServiceId
                     + " type=" + type);
         }
+        mContext = context;
         mType = type;
         mHandler = new Handler(context.getMainLooper());
+
+        mViewContainer = new LinearLayout(context);
+        // TODO: Remove temporary red background color
+        mViewContainer.setBackground(new ColorDrawable(Color.RED));
     }
 
     @Override
     public void onRelease() {
         if (DEBUG) {
             Log.d(TAG, "onRelease");
+        }
+        if (mSurface != null) {
+            mSurface.release();
+            mSurface = null;
+        }
+        if (mVirtualDisplay != null) {
+            mVirtualDisplay.release();
+            mVirtualDisplay = null;
         }
     }
 
@@ -56,7 +83,22 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         if (DEBUG) {
             Log.d(TAG, "onSetSurface");
         }
-        return false;
+        if (mSurface != null) {
+            mSurface.release();
+        }
+        mSurface = surface;
+        return true;
+    }
+
+    @Override
+    public void onSurfaceChanged(int format, int width, int height) {
+        if (DEBUG) {
+            Log.d(TAG, "onSurfaceChanged format=" + format + " width=" + width +
+                    " height=" + height);
+        }
+        if (mSurface != null) {
+            updateSurface(mSurface, width, height);
+        }
     }
 
     @Override
@@ -91,6 +133,36 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
                     }
                 },
                 100);
+    }
+
+    private void updateSurface(Surface surface, int width, int height) {
+        mHandler.post(
+                () -> {
+                    // Update our virtualDisplay if it already exists, create a new one otherwise
+                    if (mVirtualDisplay != null) {
+                        mVirtualDisplay.setSurface(surface);
+                        mVirtualDisplay.resize(width, height, DisplayMetrics.DENSITY_DEFAULT);
+                    } else {
+                        DisplayManager displayManager =
+                                mContext.getSystemService(DisplayManager.class);
+                        if (displayManager == null) {
+                            Log.e(TAG, "Failed to get DisplayManager");
+                            return;
+                        }
+                        mVirtualDisplay = displayManager.createVirtualDisplay(VIRTUAL_DISPLAY_NAME,
+                                        width,
+                                        height,
+                                        DisplayMetrics.DENSITY_DEFAULT,
+                                        surface,
+                                        DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
+
+                        Presentation presentation =
+                                new Presentation(mContext, mVirtualDisplay.getDisplay());
+                        presentation.setContentView(mViewContainer);
+                        presentation.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+                        presentation.show();
+                    }
+                });
     }
 
     @Override
