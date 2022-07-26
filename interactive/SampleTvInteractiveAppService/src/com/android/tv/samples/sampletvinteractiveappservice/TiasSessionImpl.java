@@ -28,12 +28,15 @@ import android.net.Uri;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import java.util.List;
 
@@ -146,6 +149,27 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
                 100);
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, @NonNull KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_PROG_RED:
+                tuneToNextChannel();
+                return true;
+            default:
+                return super.onKeyDown(keyCode, event);
+        }
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, @NonNull KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_PROG_RED:
+                return true;
+            default:
+                return super.onKeyUp(keyCode, event);
+        }
+    }
+
     private void updateSurface(Surface surface, int width, int height) {
         mHandler.post(
                 () -> {
@@ -240,6 +264,20 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
                             break;
                     }
                 }
+        );
+    }
+
+    private void tuneToNextChannel() {
+        sendPlaybackCommandRequest(TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_TUNE_NEXT,
+                null);
+        // Delay request for new information to give time to tune
+        mHandler.postDelayed(
+                () -> {
+                    requestCurrentTvInputId();
+                    requestCurrentChannelUri();
+                    requestTrackInfoList();
+                },
+                1000
         );
     }
 

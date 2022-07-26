@@ -23,4 +23,5 @@
         <item>atsc</item>
     </string-array>
     <string name="overlay_title_string">Sample TV Interactive App Service</string>
+    <string name="red_button_string">Press the Red Interactive Button to tune to the next channel</string>
 </resources>

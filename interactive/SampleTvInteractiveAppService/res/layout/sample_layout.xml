@@ -36,6 +36,13 @@
             android:textSize="32sp"/>
         <TextView
             style="@style/overlay_text_item"
+            android:text="@string/red_button_string"
+            android:textStyle="bold"/>
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="20dp"/>
+        <TextView
+            style="@style/overlay_text_item"
             android:id="@+id/app_service_id"/>
         <TextView
             style="@style/overlay_text_item"
