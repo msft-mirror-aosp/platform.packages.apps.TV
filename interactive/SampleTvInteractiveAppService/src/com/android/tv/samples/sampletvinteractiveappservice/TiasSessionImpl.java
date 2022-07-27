@@ -17,11 +17,15 @@
 package com.android.tv.samples.sampletvinteractiveappservice;
 
 import android.content.Context;
+import android.media.tv.TvTrackInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppService;
+import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Surface;
+
+import java.util.List;
 
 public class TiasSessionImpl extends TvInteractiveAppService.Session {
     private static final String TAG = "SampleTvInteractiveAppService";
@@ -60,6 +64,13 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         if (DEBUG) {
             Log.d(TAG, "onStartInteractiveApp");
         }
+        mHandler.post(
+                () -> {
+                    requestCurrentTvInputId();
+                    requestCurrentChannelUri();
+                    requestTrackInfoList();
+                }
+        );
     }
 
     @Override
@@ -80,5 +91,33 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
                     }
                 },
                 100);
+    }
+
+    @Override
+    public void onCurrentChannelUri(Uri channelUri) {
+        if (DEBUG) {
+            Log.d(TAG, "onCurrentChannelUri uri=" + channelUri);
+        }
+    }
+
+    @Override
+    public void onTrackInfoList(List<TvTrackInfo> tracks) {
+        if (DEBUG) {
+            Log.d(TAG, "onTrackInfoList size=" + tracks.size());
+            for (int i = 0; i < tracks.size(); i++) {
+                TvTrackInfo trackInfo = tracks.get(i);
+                if (trackInfo != null) {
+                    Log.d(TAG, "track " + i + ": type=" + trackInfo.getType() +
+                            " id=" + trackInfo.getId());
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onCurrentTvInputId(String inputId) {
+        if (DEBUG) {
+            Log.d(TAG, "onCurrentTvInputId id=" + inputId);
+        }
     }
 }
