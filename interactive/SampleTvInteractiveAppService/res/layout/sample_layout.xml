@@ -37,5 +37,20 @@
         <TextView
             style="@style/overlay_text_item"
             android:id="@+id/app_service_id"/>
+        <TextView
+            style="@style/overlay_text_item"
+            android:id="@+id/tv_input_id"/>
+        <TextView
+            style="@style/overlay_text_item"
+            android:id="@+id/channel_uri"/>
+        <TextView
+            style="@style/overlay_text_item"
+            android:id="@+id/video_track_selected"/>
+        <TextView
+            style="@style/overlay_text_item"
+            android:id="@+id/audio_track_selected"/>
+        <TextView
+            style="@style/overlay_text_item"
+            android:id="@+id/subtitle_track_selected"/>
     </LinearLayout>
 </RelativeLayout>

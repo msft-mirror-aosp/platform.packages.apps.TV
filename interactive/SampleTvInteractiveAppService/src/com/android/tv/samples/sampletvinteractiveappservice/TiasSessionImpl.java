@@ -51,6 +51,12 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
     private Surface mSurface;
     private VirtualDisplay mVirtualDisplay;
 
+    private TextView mTvInputIdView;
+    private TextView mChannelUriView;
+    private TextView mVideoTrackView;
+    private TextView mAudioTrackView;
+    private TextView mSubtitleTrackView;
+
     public TiasSessionImpl(Context context, String iAppServiceId, int type) {
         super(context);
         if (DEBUG) {
@@ -173,6 +179,18 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         View sampleView = LayoutInflater.from(mContext).inflate(R.layout.sample_layout, null);
         TextView appServiceIdText = sampleView.findViewById(R.id.app_service_id);
         appServiceIdText.setText("App Service ID: " + mAppServiceId);
+
+        mTvInputIdView = sampleView.findViewById(R.id.tv_input_id);
+        mChannelUriView = sampleView.findViewById(R.id.channel_uri);
+        mVideoTrackView = sampleView.findViewById(R.id.video_track_selected);
+        mAudioTrackView = sampleView.findViewById(R.id.audio_track_selected);
+        mSubtitleTrackView = sampleView.findViewById(R.id.subtitle_track_selected);
+        // Set default values for the selected tracks, since we cannot request data on them directly
+        // TODO: Implement onTrackSelected() to fill these values
+        mVideoTrackView.setText("No video track selected");
+        mAudioTrackView.setText("No audio track selected");
+        mSubtitleTrackView.setText("No subtitle track selected");
+
         mViewContainer.addView(sampleView);
     }
 
@@ -181,6 +199,7 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         if (DEBUG) {
             Log.d(TAG, "onCurrentChannelUri uri=" + channelUri);
         }
+        mChannelUriView.setText("Channel URI: " + channelUri);
     }
 
     @Override
@@ -202,5 +221,6 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         if (DEBUG) {
             Log.d(TAG, "onCurrentTvInputId id=" + inputId);
         }
+        mTvInputIdView.setText("TV Input ID: " + inputId);
     }
 }
