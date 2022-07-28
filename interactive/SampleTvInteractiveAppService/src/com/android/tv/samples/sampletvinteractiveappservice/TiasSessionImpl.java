@@ -50,6 +50,7 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
     private final ViewGroup mViewContainer;
     private Surface mSurface;
     private VirtualDisplay mVirtualDisplay;
+    private List<TvTrackInfo> mTracks;
 
     private TextView mTvInputIdView;
     private TextView mChannelUriView;
@@ -186,12 +187,60 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         mAudioTrackView = sampleView.findViewById(R.id.audio_track_selected);
         mSubtitleTrackView = sampleView.findViewById(R.id.subtitle_track_selected);
         // Set default values for the selected tracks, since we cannot request data on them directly
-        // TODO: Implement onTrackSelected() to fill these values
         mVideoTrackView.setText("No video track selected");
         mAudioTrackView.setText("No audio track selected");
         mSubtitleTrackView.setText("No subtitle track selected");
 
         mViewContainer.addView(sampleView);
+    }
+
+    private void updateTrackSelectedView(int type, String trackId) {
+        mHandler.post(
+                () -> {
+                    if (mTracks == null) {
+                        return;
+                    }
+                    TvTrackInfo newSelectedTrack = null;
+                    for (TvTrackInfo track : mTracks) {
+                        if (track.getType() == type && track.getId().equals(trackId)) {
+                            newSelectedTrack = track;
+                            break;
+                        }
+                    }
+
+                    if (newSelectedTrack == null) {
+                        if (DEBUG) {
+                            Log.d(TAG, "Did not find selected track within track list");
+                        }
+                        return;
+                    }
+                    switch (newSelectedTrack.getType()) {
+                        case TvTrackInfo.TYPE_VIDEO:
+                            mVideoTrackView.setText(
+                                    "Video Track: id= " + newSelectedTrack.getId()
+                                    + ", height=" + newSelectedTrack.getVideoHeight()
+                                    + ", width=" + newSelectedTrack.getVideoWidth()
+                                    + ", frame_rate=" + newSelectedTrack.getVideoFrameRate()
+                                    + ", pixel_ratio=" + newSelectedTrack.getVideoPixelAspectRatio()
+                            );
+                            break;
+                        case TvTrackInfo.TYPE_AUDIO:
+                            mAudioTrackView.setText(
+                                    "Audio Track: id=" + newSelectedTrack.getId()
+                                    + ", lang=" + newSelectedTrack.getLanguage()
+                                    + ", sample_rate=" + newSelectedTrack.getAudioSampleRate()
+                                    + ", channel_count=" + newSelectedTrack.getAudioChannelCount()
+                            );
+                            break;
+                        case TvTrackInfo.TYPE_SUBTITLE:
+                            mSubtitleTrackView.setText(
+                                    "Subtitle Track: id=" + newSelectedTrack.getId()
+                                    + ", lang=" + newSelectedTrack.getLanguage()
+                            );
+                            break;
+                    }
+                }
+        );
     }
 
     @Override
@@ -214,6 +263,23 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
                 }
             }
         }
+        mTracks = tracks;
+    }
+
+    @Override
+    public void onTracksChanged(List<TvTrackInfo> tracks) {
+        if (DEBUG) {
+            Log.d(TAG, "onTracksChanged");
+        }
+        onTrackInfoList(tracks);
+    }
+
+    @Override
+    public void onTrackSelected(int type, String trackId) {
+        if (DEBUG) {
+            Log.d(TAG, "onTrackSelected type=" + type + " trackId=" + trackId);
+        }
+        updateTrackSelectedView(type, trackId);
     }
 
     @Override
