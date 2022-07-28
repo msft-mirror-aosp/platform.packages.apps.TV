@@ -16,11 +16,6 @@
   -->
 
 <resources>
-    <string name="sample_tias">SampleTvInteractiveAppService</string>
-    <string-array name="sub_iapp_service_types">
-        <item>hbbtv</item>
-        <item>ginga</item>
-        <item>atsc</item>
-    </string-array>
-    <string name="overlay_title_string">Sample TV Interactive App Service</string>
+    <color name="overlay_background_color">#CCCCCCCC</color>
+    <color name="overlay_text_color">#FF000000</color>
 </resources>

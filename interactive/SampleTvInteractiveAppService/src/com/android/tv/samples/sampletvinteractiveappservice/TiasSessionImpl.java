@@ -18,7 +18,6 @@ package com.android.tv.samples.sampletvinteractiveappservice;
 
 import android.app.Presentation;
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -29,9 +28,12 @@ import android.net.Uri;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Surface;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import java.util.List;
 
@@ -43,6 +45,7 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
 
     private final Context mContext;
     private final Handler mHandler;
+    private final String mAppServiceId;
     private final int mType;
     private final ViewGroup mViewContainer;
     private Surface mSurface;
@@ -55,12 +58,12 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
                     + " type=" + type);
         }
         mContext = context;
+        mAppServiceId = iAppServiceId;
         mType = type;
         mHandler = new Handler(context.getMainLooper());
 
         mViewContainer = new LinearLayout(context);
-        // TODO: Remove temporary red background color
-        mViewContainer.setBackground(new ColorDrawable(Color.RED));
+        mViewContainer.setBackground(new ColorDrawable(0));
     }
 
     @Override
@@ -108,6 +111,7 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         }
         mHandler.post(
                 () -> {
+                    initSampleView();
                     requestCurrentTvInputId();
                     requestCurrentChannelUri();
                     requestTrackInfoList();
@@ -163,6 +167,13 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
                         presentation.show();
                     }
                 });
+    }
+
+    private void initSampleView() {
+        View sampleView = LayoutInflater.from(mContext).inflate(R.layout.sample_layout, null);
+        TextView appServiceIdText = sampleView.findViewById(R.id.app_service_id);
+        appServiceIdText.setText("App Service ID: " + mAppServiceId);
+        mViewContainer.addView(sampleView);
     }
 
     @Override
