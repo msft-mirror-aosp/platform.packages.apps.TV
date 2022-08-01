@@ -115,6 +115,7 @@ import com.android.tv.dvr.ui.DvrStopRecordingFragment;
 import com.android.tv.dvr.ui.DvrUiHelper;
 import com.android.tv.features.TvFeatures;
 import com.android.tv.guide.ProgramItemView;
+import com.android.tv.interactive.IAppManager;
 import com.android.tv.menu.Menu;
 import com.android.tv.onboarding.OnboardingActivity;
 import com.android.tv.parental.ContentRatingsManager;
@@ -364,6 +365,8 @@ public class MainActivity extends Activity
     private final ArrayDeque<Long> mRecentChannels = new ArrayDeque<>(MAX_RECENT_CHANNELS);
 
     private String mLastInputIdFromIntent;
+
+    private IAppManager mIAppManager;
 
     private final Handler mHandler = new MainActivityHandler(this);
     private final Set<OnActionClickListener> mOnActionClickListeners = new ArraySet<>();
@@ -732,6 +735,9 @@ public class MainActivity extends Activity
             mDvrConflictChecker = new ConflictChecker(this);
         }
         initForTest();
+        if (TvFeatures.HAS_TIAF.isEnabled(this)) {
+            mIAppManager = new IAppManager(this);
+        }
         Debug.getTimer(Debug.TAG_START_UP_TIMER).log("MainActivity.onCreate end");
     }
 
