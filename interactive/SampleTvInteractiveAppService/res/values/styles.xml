@@ -14,14 +14,15 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<resources>
-    <string name="sample_tias">SampleTvInteractiveAppService</string>
-    <string-array name="sub_iapp_service_types">
-        <item>hbbtv</item>
-        <item>ginga</item>
-        <item>atsc</item>
-    </string-array>
-    <string name="overlay_title_string">Sample TV Interactive App Service</string>
-    <string name="red_button_string">Press the Red Interactive Button to tune to the next channel</string>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <style name="overlay_text_item">
+        <item name="android:layout_gravity">left</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">25dp</item>
+        <item name="android:layout_marginRight">25dp</item>
+        <item name="android:layout_marginBottom">5dp</item>
+        <item name="android:textColor">@color/overlay_text_color</item>
+        <item name="android:textSize">20sp</item>
+    </style>
 </resources>
