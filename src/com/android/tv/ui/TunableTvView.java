@@ -736,6 +736,13 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
         }
     }
 
+    @Override
+    public float getStreamVolume() {
+        return mIsMuted
+                ? 0
+                : mVolume;
+    }
+
     /**
      * Sets fixed size for the internal {@link android.view.Surface} of {@link
      * android.media.tv.TvView}. If either {@code width} or {@code height} is non positive, the

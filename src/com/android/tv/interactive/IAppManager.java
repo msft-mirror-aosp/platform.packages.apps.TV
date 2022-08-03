@@ -18,6 +18,7 @@ package com.android.tv.interactive;
 
 import android.annotation.TargetApi;
 import android.graphics.Rect;
+import android.media.tv.TvTrackInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.AitInfo;
 import android.media.tv.interactive.TvInteractiveAppServiceInfo;
@@ -31,9 +32,11 @@ import android.view.View;
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.common.SoftPreconditions;
+import com.android.tv.data.api.Channel;
 import com.android.tv.features.TvFeatures;
 import com.android.tv.ui.TunableTvView;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -175,19 +178,80 @@ public class IAppManager {
         public void onSetVideoBounds(String iAppServiceId, Rect rect) {}
 
         @Override
-        public void onRequestCurrentChannelUri(String iAppServiceId) {}
+        public void onRequestCurrentChannelUri(String iAppServiceId) {
+            if (mTvIAppView == null) {
+                return;
+            }
+            Channel currentChannel = mMainActivity.getCurrentChannel();
+            Uri currentUri = (currentChannel == null)
+                    ? null
+                    : currentChannel.getUri();
+            mTvIAppView.sendCurrentChannelUri(currentUri);
+        }
 
         @Override
-        public void onRequestCurrentChannelLcn(String iAppServiceId) {}
+        public void onRequestCurrentChannelLcn(String iAppServiceId) {
+            if (mTvIAppView == null) {
+                return;
+            }
+            Channel currentChannel = mMainActivity.getCurrentChannel();
+            if (currentChannel == null || currentChannel.getDisplayNumber() == null) {
+                return;
+            }
+            // Expected format is major channel number, delimiter, minor channel number
+            String displayNumber = currentChannel.getDisplayNumber();
+            String format = "[0-9]+" + Channel.CHANNEL_NUMBER_DELIMITER + "[0-9]+";
+            if (!displayNumber.matches(format)) {
+                return;
+            }
+            // Major channel number is returned
+            String[] numbers = displayNumber.split(
+                    String.valueOf(Channel.CHANNEL_NUMBER_DELIMITER));
+            mTvIAppView.sendCurrentChannelLcn(Integer.parseInt(numbers[0]));
+        }
 
         @Override
-        public void onRequestStreamVolume(String iAppServiceId) {}
+        public void onRequestStreamVolume(String iAppServiceId) {
+            if (mTvIAppView == null || mTvView == null) {
+                return;
+            }
+            mTvIAppView.sendStreamVolume(mTvView.getStreamVolume());
+        }
 
         @Override
-        public void onRequestTrackInfoList(String iAppServiceId) {}
+        public void onRequestTrackInfoList(String iAppServiceId) {
+            if (mTvIAppView == null || mTvView == null) {
+                return;
+            }
+            List<TvTrackInfo> allTracks = new ArrayList<>();
+            int[] trackTypes = new int[] {TvTrackInfo.TYPE_AUDIO,
+                    TvTrackInfo.TYPE_VIDEO, TvTrackInfo.TYPE_SUBTITLE};
+
+            for (int trackType : trackTypes) {
+                List<TvTrackInfo> currentTracks = mTvView.getTracks(trackType);
+                if (currentTracks == null) {
+                    continue;
+                }
+                for (TvTrackInfo track : currentTracks) {
+                    if (track != null) {
+                        allTracks.add(track);
+                    }
+                }
+            }
+            mTvIAppView.sendTrackInfoList(allTracks);
+        }
 
         @Override
-        public void onRequestCurrentTvInputId(String iAppServiceId) {}
+        public void onRequestCurrentTvInputId(String iAppServiceId) {
+            if (mTvIAppView == null) {
+                return;
+            }
+            Channel currentChannel = mMainActivity.getCurrentChannel();
+            String currentInputId = (currentChannel == null)
+                    ? null
+                    : currentChannel.getInputId();
+            mTvIAppView.sendCurrentTvInputId(currentInputId);
+        }
 
         @Override
         public void onRequestSigning(String iAppServiceId, String signingId, String algorithm,
