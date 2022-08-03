@@ -18,6 +18,7 @@ package com.android.tv;
 
 import static com.android.tv.common.feature.SystemAppFeature.SYSTEM_APP_FEATURE;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.SearchManager;
@@ -32,6 +33,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.hardware.display.DisplayManager;
+import android.media.tv.AitInfo;
 import android.media.tv.TvContentRating;
 import android.media.tv.TvContract;
 import android.media.tv.TvContract.Channels;
@@ -2994,6 +2996,12 @@ public class MainActivity extends Activity
                 mOverlayManager.updateChannelBannerAndShowIfNeeded(
                         TvOverlayManager.UPDATE_CHANNEL_BANNER_REASON_UPDATE_SIGNAL_STRENGTH);
             }
+        }
+
+        @TargetApi(Build.VERSION_CODES.TIRAMISU)
+        @Override
+        public void onAitInfoUpdated(String inputId, AitInfo aitInfo) {
+            // TODO: Begin the Interactive App
         }
     }
 
