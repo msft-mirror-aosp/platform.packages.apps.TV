@@ -190,6 +190,18 @@ public class SettingsFragment extends SideFragment {
                         }
                     });
         }
+        //Interactive Application Settings
+        items.add(
+                new ActionItem(getString(R.string.interactive_app_settings)) {
+                    @Override
+                    protected void onSelected() {
+                        getMainActivity()
+                                .getOverlayManager()
+                                .getSideFragmentManager()
+                                .show(new InteractiveAppSettingsFragment(), false);
+                    }
+                });
+
         // Show version.
         SimpleActionItem version =
                 new SimpleActionItem(
