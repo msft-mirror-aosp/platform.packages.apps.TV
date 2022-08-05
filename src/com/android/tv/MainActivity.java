@@ -738,7 +738,7 @@ public class MainActivity extends Activity
         }
         initForTest();
         if (TvFeatures.HAS_TIAF.isEnabled(this)) {
-            mIAppManager = new IAppManager(this, mTvView);
+            mIAppManager = new IAppManager(this, mTvView, mHandler);
         }
         Debug.getTimer(Debug.TAG_START_UP_TIMER).log("MainActivity.onCreate end");
     }
@@ -1642,7 +1642,7 @@ public class MainActivity extends Activity
         }
     }
 
-    private void stopTv() {
+    public void stopTv() {
         stopTv(null, false);
     }
 

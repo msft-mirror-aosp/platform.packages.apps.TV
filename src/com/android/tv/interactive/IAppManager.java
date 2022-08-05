@@ -21,17 +21,21 @@ import android.graphics.Rect;
 import android.media.tv.TvTrackInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.AitInfo;
+import android.media.tv.interactive.TvInteractiveAppService;
 import android.media.tv.interactive.TvInteractiveAppServiceInfo;
 import android.media.tv.interactive.TvInteractiveAppView;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
 
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.common.SoftPreconditions;
+import com.android.tv.common.util.ContentUriUtils;
 import com.android.tv.data.api.Channel;
 import com.android.tv.features.TvFeatures;
 import com.android.tv.ui.TunableTvView;
@@ -50,13 +54,16 @@ public class IAppManager {
     private final TvInteractiveAppManager mTvIAppManager;
     private final TvInteractiveAppView mTvIAppView;
     private final TunableTvView mTvView;
+    private final Handler mHandler;
     private AitInfo mCurrentAitInfo;
 
-    public IAppManager(MainActivity parentActivity, TunableTvView tvView) {
+    public IAppManager(@NonNull MainActivity parentActivity, @NonNull TunableTvView tvView,
+            @NonNull Handler handler) {
         SoftPreconditions.checkFeatureEnabled(parentActivity, TvFeatures.HAS_TIAF, TAG);
 
         mMainActivity = parentActivity;
         mTvView = tvView;
+        mHandler = handler;
         mTvIAppManager = mMainActivity.getSystemService(TvInteractiveAppManager.class);
         mTvIAppView = mMainActivity.findViewById(R.id.tv_app_view);
         if (mTvIAppManager == null || mTvIAppView == null) {
@@ -162,7 +169,54 @@ public class IAppManager {
             TvInteractiveAppView.TvInteractiveAppCallback {
         @Override
         public void onPlaybackCommandRequest(String iAppServiceId, String cmdType,
-                Bundle parameters) {}
+                Bundle parameters) {
+            if (mTvView == null) {
+                return;
+            }
+            switch (cmdType) {
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_TUNE:
+                    if (parameters == null) {
+                        return;
+                    }
+                    String uriString = parameters.getString(
+                            TvInteractiveAppService.COMMAND_PARAMETER_KEY_CHANNEL_URI);
+                    if (uriString != null) {
+                        Uri channelUri = Uri.parse(uriString);
+                        Channel channel = mMainActivity.getChannelDataManager().getChannel(
+                                ContentUriUtils.safeParseId(channelUri));
+                        if (channel != null) {
+                            mHandler.post(() -> mMainActivity.tuneToChannel(channel));
+                        }
+                    }
+                    break;
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_SELECT_TRACK:
+                    // TODO: Handle select track command
+                    break;
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_SET_STREAM_VOLUME:
+                    if (parameters == null) {
+                        return;
+                    }
+                    float volume = parameters.getFloat(
+                            TvInteractiveAppService.COMMAND_PARAMETER_KEY_VOLUME, -1);
+                    if (volume >= 0.0 && volume <= 1.0) {
+                        mHandler.post(() -> mTvView.setStreamVolume(volume));
+                    }
+                    break;
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_TUNE_NEXT:
+                    mHandler.post(mMainActivity::channelUp);
+                    break;
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_TUNE_PREV:
+                    mHandler.post(mMainActivity::channelDown);
+                    break;
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_STOP:
+                    mHandler.post(mMainActivity::stopTv);
+                    break;
+                default:
+                    Log.e(TAG, "PlaybackCommandRequest had unknown cmdType:"
+                            + cmdType);
+                    break;
+            }
+        }
 
         @Override
         public void onStateChanged(String iAppServiceId, int state, int err) {}
