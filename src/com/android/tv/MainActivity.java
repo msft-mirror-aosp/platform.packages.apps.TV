@@ -18,6 +18,7 @@ package com.android.tv;
 
 import static com.android.tv.common.feature.SystemAppFeature.SYSTEM_APP_FEATURE;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.SearchManager;
@@ -32,6 +33,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.hardware.display.DisplayManager;
+import android.media.tv.AitInfo;
 import android.media.tv.TvContentRating;
 import android.media.tv.TvContract;
 import android.media.tv.TvContract.Channels;
@@ -736,7 +738,7 @@ public class MainActivity extends Activity
         }
         initForTest();
         if (TvFeatures.HAS_TIAF.isEnabled(this)) {
-            mIAppManager = new IAppManager(this);
+            mIAppManager = new IAppManager(this, mTvView, mHandler);
         }
         Debug.getTimer(Debug.TAG_START_UP_TIMER).log("MainActivity.onCreate end");
     }
@@ -1132,6 +1134,9 @@ public class MainActivity extends Activity
     private void stopAll(boolean keepVisibleBehind) {
         mOverlayManager.hideOverlays(TvOverlayManager.FLAG_HIDE_OVERLAYS_WITHOUT_ANIMATION);
         stopTv("stopAll()", keepVisibleBehind);
+        if (mIAppManager != null) {
+            mIAppManager.stop();
+        }
     }
 
     public TvInputManagerHelper getTvInputManagerHelper() {
@@ -1637,7 +1642,7 @@ public class MainActivity extends Activity
         }
     }
 
-    private void stopTv() {
+    public void stopTv() {
         stopTv(null, false);
     }
 
@@ -2993,6 +2998,14 @@ public class MainActivity extends Activity
             if (CommonFeatures.TUNER_SIGNAL_STRENGTH.isEnabled(getApplicationContext())) {
                 mOverlayManager.updateChannelBannerAndShowIfNeeded(
                         TvOverlayManager.UPDATE_CHANNEL_BANNER_REASON_UPDATE_SIGNAL_STRENGTH);
+            }
+        }
+
+        @TargetApi(Build.VERSION_CODES.TIRAMISU)
+        @Override
+        public void onAitInfoUpdated(String inputId, AitInfo aitInfo) {
+            if (mIAppManager != null) {
+                mIAppManager.onAitInfoUpdated(aitInfo);
             }
         }
     }

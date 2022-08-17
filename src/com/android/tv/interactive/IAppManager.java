@@ -18,33 +18,52 @@ package com.android.tv.interactive;
 
 import android.annotation.TargetApi;
 import android.graphics.Rect;
+import android.media.tv.TvTrackInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
+import android.media.tv.AitInfo;
+import android.media.tv.interactive.TvInteractiveAppService;
+import android.media.tv.interactive.TvInteractiveAppServiceInfo;
 import android.media.tv.interactive.TvInteractiveAppView;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.util.Log;
+import android.view.View;
 
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.common.SoftPreconditions;
+import com.android.tv.common.util.ContentUriUtils;
+import com.android.tv.data.api.Channel;
 import com.android.tv.features.TvFeatures;
+import com.android.tv.ui.TunableTvView;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @TargetApi(Build.VERSION_CODES.TIRAMISU)
 public class IAppManager {
     private static final String TAG = "IAppManager";
+    private static final boolean DEBUG = false;
 
     private final MainActivity mMainActivity;
     private final TvInteractiveAppManager mTvIAppManager;
     private final TvInteractiveAppView mTvIAppView;
+    private final TunableTvView mTvView;
+    private final Handler mHandler;
+    private AitInfo mCurrentAitInfo;
 
-    public IAppManager(MainActivity parentActivity) {
+    public IAppManager(@NonNull MainActivity parentActivity, @NonNull TunableTvView tvView,
+            @NonNull Handler handler) {
         SoftPreconditions.checkFeatureEnabled(parentActivity, TvFeatures.HAS_TIAF, TAG);
 
         mMainActivity = parentActivity;
+        mTvView = tvView;
+        mHandler = handler;
         mTvIAppManager = mMainActivity.getSystemService(TvInteractiveAppManager.class);
         mTvIAppView = mMainActivity.findViewById(R.id.tv_app_view);
         if (mTvIAppManager == null || mTvIAppView == null) {
@@ -63,6 +82,65 @@ public class IAppManager {
         );
     }
 
+    public void stop() {
+        mTvIAppView.stopInteractiveApp();
+        mTvIAppView.reset();
+        mCurrentAitInfo = null;
+    }
+
+    public void onAitInfoUpdated(AitInfo aitInfo) {
+        if (mTvIAppManager == null || aitInfo == null) {
+            return;
+        }
+        if (mCurrentAitInfo != null && mCurrentAitInfo.getType() == aitInfo.getType()) {
+            if (DEBUG) {
+                Log.d(TAG, "Ignoring AIT update: Same type as current");
+            }
+            return;
+        }
+
+        List<TvInteractiveAppServiceInfo> tvIAppInfoList =
+                mTvIAppManager.getTvInteractiveAppServiceList();
+        if (tvIAppInfoList.isEmpty()) {
+            if (DEBUG) {
+                Log.d(TAG, "Ignoring AIT update: No interactive app services registered");
+            }
+            return;
+        }
+
+        // App Type ID numbers allocated by DVB Services
+        int type = -1;
+        switch (aitInfo.getType()) {
+            case 0x0010: // HBBTV
+                type = TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV;
+                break;
+            case 0x0006: // DCAP-J: DCAP Java applications
+            case 0x0007: // DCAP-X: DCAP XHTML applications
+                type = TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_ATSC;
+                break;
+            case 0x0001: // Ginga-J
+            case 0x0009: // Ginga-NCL
+            case 0x000b: // Ginga-HTML5
+                type = TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_GINGA;
+                break;
+            default:
+                Log.e(TAG, "AIT info contained unknown type: " + aitInfo.getType());
+                return;
+        }
+
+        // TODO: Only open interactive app if enabled through settings
+        for (TvInteractiveAppServiceInfo info : tvIAppInfoList) {
+            if ((info.getSupportedTypes() & type) > 0) {
+                mCurrentAitInfo = aitInfo;
+                if (mTvIAppView != null) {
+                    mTvIAppView.setVisibility(View.VISIBLE);
+                    mTvIAppView.prepareInteractiveApp(info.getId(), type);
+                }
+                break;
+            }
+        }
+    }
+
     private class MyInteractiveAppManagerCallback extends
             TvInteractiveAppManager.TvInteractiveAppCallback {
         @Override
@@ -76,14 +154,69 @@ public class IAppManager {
 
         @Override
         public void onTvInteractiveAppServiceStateChanged(String iAppServiceId, int type, int state,
-                int err) {}
+                int err) {
+            if (state == TvInteractiveAppManager.SERVICE_STATE_READY && mTvIAppView != null) {
+                mTvIAppView.startInteractiveApp();
+                mTvIAppView.setTvView(mTvView.getTvView());
+                if (mTvView.getTvView() != null) {
+                    mTvView.getTvView().setInteractiveAppNotificationEnabled(true);
+                }
+            }
+        }
     }
 
     private class MyInteractiveAppViewCallback extends
             TvInteractiveAppView.TvInteractiveAppCallback {
         @Override
         public void onPlaybackCommandRequest(String iAppServiceId, String cmdType,
-                Bundle parameters) {}
+                Bundle parameters) {
+            if (mTvView == null) {
+                return;
+            }
+            switch (cmdType) {
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_TUNE:
+                    if (parameters == null) {
+                        return;
+                    }
+                    String uriString = parameters.getString(
+                            TvInteractiveAppService.COMMAND_PARAMETER_KEY_CHANNEL_URI);
+                    if (uriString != null) {
+                        Uri channelUri = Uri.parse(uriString);
+                        Channel channel = mMainActivity.getChannelDataManager().getChannel(
+                                ContentUriUtils.safeParseId(channelUri));
+                        if (channel != null) {
+                            mHandler.post(() -> mMainActivity.tuneToChannel(channel));
+                        }
+                    }
+                    break;
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_SELECT_TRACK:
+                    // TODO: Handle select track command
+                    break;
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_SET_STREAM_VOLUME:
+                    if (parameters == null) {
+                        return;
+                    }
+                    float volume = parameters.getFloat(
+                            TvInteractiveAppService.COMMAND_PARAMETER_KEY_VOLUME, -1);
+                    if (volume >= 0.0 && volume <= 1.0) {
+                        mHandler.post(() -> mTvView.setStreamVolume(volume));
+                    }
+                    break;
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_TUNE_NEXT:
+                    mHandler.post(mMainActivity::channelUp);
+                    break;
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_TUNE_PREV:
+                    mHandler.post(mMainActivity::channelDown);
+                    break;
+                case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_STOP:
+                    mHandler.post(mMainActivity::stopTv);
+                    break;
+                default:
+                    Log.e(TAG, "PlaybackCommandRequest had unknown cmdType:"
+                            + cmdType);
+                    break;
+            }
+        }
 
         @Override
         public void onStateChanged(String iAppServiceId, int state, int err) {}
@@ -99,19 +232,80 @@ public class IAppManager {
         public void onSetVideoBounds(String iAppServiceId, Rect rect) {}
 
         @Override
-        public void onRequestCurrentChannelUri(String iAppServiceId) {}
+        public void onRequestCurrentChannelUri(String iAppServiceId) {
+            if (mTvIAppView == null) {
+                return;
+            }
+            Channel currentChannel = mMainActivity.getCurrentChannel();
+            Uri currentUri = (currentChannel == null)
+                    ? null
+                    : currentChannel.getUri();
+            mTvIAppView.sendCurrentChannelUri(currentUri);
+        }
 
         @Override
-        public void onRequestCurrentChannelLcn(String iAppServiceId) {}
+        public void onRequestCurrentChannelLcn(String iAppServiceId) {
+            if (mTvIAppView == null) {
+                return;
+            }
+            Channel currentChannel = mMainActivity.getCurrentChannel();
+            if (currentChannel == null || currentChannel.getDisplayNumber() == null) {
+                return;
+            }
+            // Expected format is major channel number, delimiter, minor channel number
+            String displayNumber = currentChannel.getDisplayNumber();
+            String format = "[0-9]+" + Channel.CHANNEL_NUMBER_DELIMITER + "[0-9]+";
+            if (!displayNumber.matches(format)) {
+                return;
+            }
+            // Major channel number is returned
+            String[] numbers = displayNumber.split(
+                    String.valueOf(Channel.CHANNEL_NUMBER_DELIMITER));
+            mTvIAppView.sendCurrentChannelLcn(Integer.parseInt(numbers[0]));
+        }
 
         @Override
-        public void onRequestStreamVolume(String iAppServiceId) {}
+        public void onRequestStreamVolume(String iAppServiceId) {
+            if (mTvIAppView == null || mTvView == null) {
+                return;
+            }
+            mTvIAppView.sendStreamVolume(mTvView.getStreamVolume());
+        }
 
         @Override
-        public void onRequestTrackInfoList(String iAppServiceId) {}
+        public void onRequestTrackInfoList(String iAppServiceId) {
+            if (mTvIAppView == null || mTvView == null) {
+                return;
+            }
+            List<TvTrackInfo> allTracks = new ArrayList<>();
+            int[] trackTypes = new int[] {TvTrackInfo.TYPE_AUDIO,
+                    TvTrackInfo.TYPE_VIDEO, TvTrackInfo.TYPE_SUBTITLE};
+
+            for (int trackType : trackTypes) {
+                List<TvTrackInfo> currentTracks = mTvView.getTracks(trackType);
+                if (currentTracks == null) {
+                    continue;
+                }
+                for (TvTrackInfo track : currentTracks) {
+                    if (track != null) {
+                        allTracks.add(track);
+                    }
+                }
+            }
+            mTvIAppView.sendTrackInfoList(allTracks);
+        }
 
         @Override
-        public void onRequestCurrentTvInputId(String iAppServiceId) {}
+        public void onRequestCurrentTvInputId(String iAppServiceId) {
+            if (mTvIAppView == null) {
+                return;
+            }
+            Channel currentChannel = mMainActivity.getCurrentChannel();
+            String currentInputId = (currentChannel == null)
+                    ? null
+                    : currentChannel.getInputId();
+            mTvIAppView.sendCurrentTvInputId(currentInputId);
+        }
 
         @Override
         public void onRequestSigning(String iAppServiceId, String signingId, String algorithm,
