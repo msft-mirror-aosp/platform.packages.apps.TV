@@ -1,5 +1,6 @@
 package com.android.tv.samples.sampletunertvinput;
 
+import static android.media.tv.TvInputManager.VIDEO_UNAVAILABLE_REASON_TUNING;
 import static android.media.tv.TvInputManager.VIDEO_UNAVAILABLE_REASON_UNKNOWN;
 
 import android.content.ContentUris;
@@ -98,6 +99,7 @@ public class SampleTunerTvInputService extends TvInputService {
         private List<MediaEventData> mSavedData;
         private long mCurrentLoopStartTimeUs = 0;
         private long mLastFramePtsUs = 0;
+        private boolean mVideoAvailable;
         private boolean mDataReady = false;
 
 
@@ -167,6 +169,9 @@ public class SampleTunerTvInputService extends TvInputService {
             }
             mChannelUri = uri;
             mHandler = new Handler();
+            mVideoAvailable = false;
+            notifyVideoUnavailable(VIDEO_UNAVAILABLE_REASON_TUNING);
+
             mDecoderThread =
                     new Thread(
                             this::decodeInternal,
@@ -271,6 +276,7 @@ public class SampleTunerTvInputService extends TvInputService {
 
             if (mMediaCodec == null) {
                 Log.e(TAG, "null codec!");
+                mVideoAvailable = false;
                 notifyVideoUnavailable(VIDEO_UNAVAILABLE_REASON_UNKNOWN);
                 return false;
             }
@@ -430,9 +436,12 @@ public class SampleTunerTvInputService extends TvInputService {
                     }
                 }
                 mMediaCodec.releaseOutputBuffer(res, true);
-                notifyVideoAvailable();
-                if (DEBUG) {
-                    Log.d(TAG, "notifyVideoAvailable");
+                if (!mVideoAvailable) {
+                    mVideoAvailable = true;
+                    notifyVideoAvailable();
+                    if (DEBUG) {
+                        Log.d(TAG, "notifyVideoAvailable");
+                    }
                 }
             } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 MediaFormat format = mMediaCodec.getOutputFormat();
