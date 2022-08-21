@@ -107,6 +107,8 @@ import com.android.tv.dialog.HalfSizedDialogFragment;
 import com.android.tv.dialog.PinDialogFragment;
 import com.android.tv.dialog.PinDialogFragment.OnPinCheckedListener;
 import com.android.tv.dialog.SafeDismissDialogFragment;
+import com.android.tv.dialog.InteractiveAppDialogFragment;
+import com.android.tv.dialog.InteractiveAppDialogFragment.OnInteractiveAppCheckedListener;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.recorder.ConflictChecker;
@@ -196,7 +198,8 @@ public class MainActivity extends Activity
                 OnPinCheckedListener,
                 ChannelChanger,
                 HasSingletons<MySingletons>,
-                HasAndroidInjector {
+                HasAndroidInjector,
+                OnInteractiveAppCheckedListener {
     private static final String TAG = "MainActivity";
     private static final boolean DEBUG = false;
     private AudioCapabilitiesReceiver mAudioCapabilitiesReceiver;
@@ -741,6 +744,15 @@ public class MainActivity extends Activity
             mIAppManager = new IAppManager(this, mTvView, mHandler);
         }
         Debug.getTimer(Debug.TAG_START_UP_TIMER).log("MainActivity.onCreate end");
+    }
+
+    @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    @Override
+    public void onInteractiveAppChecked(boolean checked) {
+        if (checked) {
+            TvSettings.setTvIAppOn(getApplicationContext(), checked);
+            mIAppManager.processHeldAitInfo();
+        }
     }
 
     private void startOnboardingActivity() {
@@ -3066,5 +3078,8 @@ public class MainActivity extends Activity
 
         @ContributesAndroidInjector
         abstract DvrScheduleFragment contributesDvrScheduleFragment();
+
+        @ContributesAndroidInjector
+        abstract InteractiveAppDialogFragment contributesInteractiveAppDialogFragment();
     }
 }
