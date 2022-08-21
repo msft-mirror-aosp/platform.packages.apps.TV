@@ -37,8 +37,10 @@ import com.android.tv.R;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.util.ContentUriUtils;
 import com.android.tv.data.api.Channel;
+import com.android.tv.dialog.InteractiveAppDialogFragment;
 import com.android.tv.features.TvFeatures;
 import com.android.tv.ui.TunableTvView;
+import com.android.tv.util.TvSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +58,8 @@ public class IAppManager {
     private final TunableTvView mTvView;
     private final Handler mHandler;
     private AitInfo mCurrentAitInfo;
+    private AitInfo mHeldAitInfo; // AIT info that has been held pending dialog confirmation
+    private boolean mTvAppDialogShown = false;
 
     public IAppManager(@NonNull MainActivity parentActivity, @NonNull TunableTvView tvView,
             @NonNull Handler handler) {
@@ -86,6 +90,15 @@ public class IAppManager {
         mTvIAppView.stopInteractiveApp();
         mTvIAppView.reset();
         mCurrentAitInfo = null;
+    }
+
+    /*
+     * Update current info based on ait info that was held when the dialog was shown.
+     */
+    public void processHeldAitInfo() {
+        if (mHeldAitInfo != null) {
+            onAitInfoUpdated(mHeldAitInfo);
+        }
     }
 
     public void onAitInfoUpdated(AitInfo aitInfo) {
@@ -128,15 +141,33 @@ public class IAppManager {
                 return;
         }
 
-        // TODO: Only open interactive app if enabled through settings
-        for (TvInteractiveAppServiceInfo info : tvIAppInfoList) {
-            if ((info.getSupportedTypes() & type) > 0) {
-                mCurrentAitInfo = aitInfo;
-                if (mTvIAppView != null) {
-                    mTvIAppView.setVisibility(View.VISIBLE);
-                    mTvIAppView.prepareInteractiveApp(info.getId(), type);
+        if (TvSettings.isTvIAppOn(mMainActivity.getApplicationContext())) {
+            mTvAppDialogShown = false;
+            for (TvInteractiveAppServiceInfo info : tvIAppInfoList) {
+                if ((info.getSupportedTypes() & type) > 0) {
+                    mCurrentAitInfo = aitInfo;
+                    if (mTvIAppView != null) {
+                        mTvIAppView.setVisibility(View.VISIBLE);
+                        mTvIAppView.prepareInteractiveApp(info.getId(), type);
+                    }
+                    break;
                 }
-                break;
+            }
+        } else if (!mTvAppDialogShown) {
+            if (DEBUG) {
+                Log.d(TAG, "TV IApp is not enabled");
+            }
+
+            for (TvInteractiveAppServiceInfo info : tvIAppInfoList) {
+                if ((info.getSupportedTypes() & type) > 0) {
+                    mMainActivity.getOverlayManager().showDialogFragment(
+                            InteractiveAppDialogFragment.DIALOG_TAG,
+                            InteractiveAppDialogFragment.create(info.getServiceInfo().packageName),
+                            false);
+                    mHeldAitInfo = aitInfo;
+                    mTvAppDialogShown = true;
+                    break;
+                }
             }
         }
     }
