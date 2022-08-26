@@ -41,6 +41,7 @@ public class SampleTunerTvInputService extends TvInputService {
 
     private static final int TIMEOUT_US = 100000;
     private static final boolean SAVE_DATA = false;
+    private static final boolean USE_DVR = true;
     private static final String MEDIA_INPUT_FILE_NAME = "media.ts";
     private static final MediaFormat VIDEO_FORMAT;
 
@@ -298,11 +299,17 @@ public class SampleTunerTvInputService extends TvInputService {
             mAudioFilter.start();
             mVideoFilter.start();
             mSectionFilter.start();
-            // use dvr playback to feed the data on platform without physical tuner
-            mDvr = SampleTunerTvInputUtils.createDvrPlayback(mTuner, mHandler,
-                    mContext, MEDIA_INPUT_FILE_NAME, DvrSettings.DATA_FORMAT_TS);
-            SampleTunerTvInputUtils.tune(mTuner, mHandler, mDvr);
-            mDvr.start();
+
+            // Dvr Playback can be used to read a file instead of relying on physical tuner
+            if (USE_DVR) {
+                mDvr = SampleTunerTvInputUtils.configureDvrPlayback(mTuner, mHandler,
+                        DvrSettings.DATA_FORMAT_TS);
+                SampleTunerTvInputUtils.readFilePlaybackInput(getApplicationContext(), mDvr,
+                        MEDIA_INPUT_FILE_NAME);
+                mDvr.start();
+            } else {
+                SampleTunerTvInputUtils.tune(mTuner, mHandler);
+            }
             mMediaCodec.start();
 
             try {

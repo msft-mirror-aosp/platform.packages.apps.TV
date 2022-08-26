@@ -52,8 +52,7 @@ public class SampleTunerTvInputUtils {
     private static final long FREQUENCY = 578000;
     private static final int INPUT_FILE_MAX_SIZE = 1000000;
 
-    public static DvrPlayback createDvrPlayback(Tuner tuner, Handler handler,
-            Context context, String fileName, int dataFormat) {
+    public static DvrPlayback configureDvrPlayback(Tuner tuner, Handler handler, int dataFormat) {
         DvrPlayback dvr = tuner.openDvrPlayback(DVR_BUFFER_SIZE, new HandlerExecutor(handler),
                 status -> {
                     if (DEBUG) {
@@ -71,6 +70,10 @@ public class SampleTunerTvInputUtils {
         if (DEBUG) {
             Log.d(TAG, "config res=" + res);
         }
+        return dvr;
+    }
+
+    public static void readFilePlaybackInput(Context context, DvrPlayback dvr, String fileName) {
         String testFile = context.getFilesDir().getAbsolutePath() + "/" + fileName;
         File file = new File(testFile);
         if (file.exists()) {
@@ -83,10 +86,14 @@ public class SampleTunerTvInputUtils {
         } else {
             Log.w(TAG, "File not existing");
         }
-        return dvr;
+
+        long read = dvr.read(INPUT_FILE_MAX_SIZE);
+        if (DEBUG) {
+            Log.d(TAG, "read=" + read);
+        }
     }
 
-    public static void tune(Tuner tuner, Handler handler, DvrPlayback dvr) {
+    public static void tune(Tuner tuner, Handler handler) {
         DvbtFrontendSettings feSettings = DvbtFrontendSettings.builder()
                 .setFrequencyLong(FREQUENCY)
                 .setTransmissionMode(DvbtFrontendSettings.TRANSMISSION_MODE_AUTO)
@@ -103,10 +110,6 @@ public class SampleTunerTvInputUtils {
         tuner.setOnTuneEventListener(new HandlerExecutor(handler), tuneEvent -> {
             if (DEBUG) {
                 Log.d(TAG, "onTuneEvent " + tuneEvent);
-            }
-            long read = dvr.read(INPUT_FILE_MAX_SIZE);
-            if (DEBUG) {
-                Log.d(TAG, "read=" + read);
             }
         });
 
