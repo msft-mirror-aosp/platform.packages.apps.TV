@@ -182,6 +182,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -1955,12 +1956,21 @@ public class MainActivity extends Activity
 
     @VisibleForTesting
     protected void applyMultiAudio(String trackId) {
+        applyMultiAudio(false, trackId);
+    }
+
+    @VisibleForTesting
+    protected void applyMultiAudio(boolean allowAutoSelection, String trackId) {
+        if (!allowAutoSelection && trackId == null) {
+            selectTrack(TvTrackInfo.TYPE_AUDIO, null, UNDEFINED_TRACK_INDEX);
+            mTvOptionsManager.onMultiAudioChanged(null);
+            return;
+        }
         List<TvTrackInfo> tracks = getTracks(TvTrackInfo.TYPE_AUDIO);
         if (tracks == null) {
             mTvOptionsManager.onMultiAudioChanged(null);
             return;
         }
-
         TvTrackInfo bestTrack = null;
         if (trackId != null) {
             for (TvTrackInfo track : tracks) {
@@ -2930,7 +2940,7 @@ public class MainActivity extends Activity
             }
             applyDisplayRefreshRate(info.getVideoFrameRate());
             mTvViewUiManager.updateTvAspectRatio();
-            applyMultiAudio(
+            applyMultiAudio(allowAutoSelectionOfTrack,
                     allowAutoSelectionOfTrack ? null : getSelectedTrack(TvTrackInfo.TYPE_AUDIO));
             applyClosedCaption();
             mOverlayManager.getMenu().onStreamInfoChanged();
