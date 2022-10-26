@@ -16,6 +16,9 @@
 
 package com.android.tv.interactive;
 
+import static com.android.tv.util.CaptionSettings.OPTION_OFF;
+import static com.android.tv.util.CaptionSettings.OPTION_ON;
+
 import android.annotation.TargetApi;
 import android.graphics.Rect;
 import android.media.tv.TvTrackInfo;
@@ -221,7 +224,25 @@ public class IAppManager {
                     }
                     break;
                 case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_SELECT_TRACK:
-                    // TODO: Handle select track command
+                    if (mTvView != null && parameters != null) {
+                        int trackType = parameters.getInt(
+                                TvInteractiveAppService.COMMAND_PARAMETER_KEY_TRACK_TYPE,
+                                -1);
+                        String trackId = parameters.getString(
+                                TvInteractiveAppService.COMMAND_PARAMETER_KEY_TRACK_ID,
+                                null);
+                        switch (trackType) {
+                            case TvTrackInfo.TYPE_AUDIO:
+                                // When trackId is null, deselects current audio track.
+                                mHandler.post(() -> mMainActivity.selectAudioTrack(trackId));
+                                break;
+                            case TvTrackInfo.TYPE_SUBTITLE:
+                                // When trackId is null, turns off captions.
+                                mHandler.post(() -> mMainActivity.selectSubtitleTrack(
+                                        trackId == null ? OPTION_OFF : OPTION_ON, trackId));
+                                break;
+                        }
+                    }
                     break;
                 case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_SET_STREAM_VOLUME:
                     if (parameters == null) {
