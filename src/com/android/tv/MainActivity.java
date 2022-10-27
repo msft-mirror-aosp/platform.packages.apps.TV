@@ -1102,7 +1102,7 @@ public class MainActivity extends Activity
         }
 
         mTvView.start();
-        mAudioManagerHelper.setVolumeByAudioFocusStatus();
+        mAudioManagerHelper.requestAudioFocus();
         tune(true);
     }
 
