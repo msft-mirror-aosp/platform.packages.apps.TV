@@ -1162,7 +1162,7 @@ public class MainActivity extends Activity
      * @param calledByPopup If true, startSetupActivity is invoked from the setup fragment.
      */
     public void startSetupActivity(TvInputInfo input, boolean calledByPopup) {
-        Intent intent = CommonUtils.createSetupIntent(input);
+        Intent intent = mSetupUtils.createSetupIntent(this, input);
         if (intent == null) {
             Toast.makeText(this, R.string.msg_no_setup_activity, Toast.LENGTH_SHORT).show();
             return;
