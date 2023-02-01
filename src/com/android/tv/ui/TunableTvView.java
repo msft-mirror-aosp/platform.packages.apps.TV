@@ -19,6 +19,7 @@ package com.android.tv.ui;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.TimeInterpolator;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -28,6 +29,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.PlaybackParams;
+import android.media.tv.AitInfo;
 import android.media.tv.TvContentRating;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
@@ -413,6 +415,25 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
                         mOnTuneListener.onChannelSignalStrength();
                     }
                 }
+
+                @TargetApi(Build.VERSION_CODES.TIRAMISU)
+                @Override
+                public void onAitInfoUpdated(String inputId, AitInfo aitInfo) {
+                    if (!TvFeatures.HAS_TIAF.isEnabled(getContext())) {
+                        return;
+                    }
+                    if (DEBUG) {
+                        Log.d(TAG,
+                                "onAitInfoUpdated: {inputId="
+                                + inputId
+                                + ", AitInfo=("
+                                + aitInfo
+                                +")}");
+                    }
+                    if (mOnTuneListener != null) {
+                        mOnTuneListener.onAitInfoUpdated(inputId, aitInfo);
+                    }
+                }
             };
 
     public TunableTvView(Context context) {
@@ -715,6 +736,13 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
         }
     }
 
+    @Override
+    public float getStreamVolume() {
+        return mIsMuted
+                ? 0
+                : mVolume;
+    }
+
     /**
      * Sets fixed size for the internal {@link android.view.Surface} of {@link
      * android.media.tv.TvView}. If either {@code width} or {@code height} is non positive, the
@@ -773,6 +801,9 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
         void onContentAllowed();
 
         void onChannelSignalStrength();
+
+        @TargetApi(Build.VERSION_CODES.TIRAMISU)
+        void onAitInfoUpdated(String inputId, AitInfo aitInfo);
     }
 
     public void unblockContent(TvContentRating rating) {
