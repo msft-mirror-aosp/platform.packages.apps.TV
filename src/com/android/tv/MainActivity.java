@@ -726,8 +726,8 @@ public class MainActivity extends Activity
         mAudioCapabilitiesReceiver = new AudioCapabilitiesReceiver(this, null);
         mAudioCapabilitiesReceiver.register();
         Intent nowPlayingIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent =
-                PendingIntent.getActivity(this, REQUEST_CODE_NOW_PLAYING, nowPlayingIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, REQUEST_CODE_NOW_PLAYING,
+                 nowPlayingIntent, PendingIntent.FLAG_IMMUTABLE);
         mMediaSessionWrapper = new MediaSessionWrapper(this, pendingIntent);
 
         mTvViewUiManager.restoreDisplayMode(false);
