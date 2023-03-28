@@ -36,6 +36,7 @@ import android.media.tv.TvInputManager;
 import android.media.tv.TvTrackInfo;
 import android.media.tv.TvView;
 import android.media.tv.TvView.OnUnhandledInputEventListener;
+import android.media.tv.interactive.TvInteractiveAppView;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -196,6 +197,7 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
     private final InputSessionManager mInputSessionManager;
 
     private int mChannelSignalStrength;
+    private TvInteractiveAppView mTvIAppView;
 
     private final TvInputCallbackCompat mCallback =
             new TvInputCallbackCompat() {
@@ -497,18 +499,26 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
                         });
         mAccessibilityManager = context.getSystemService(AccessibilityManager.class);
     }
+    public void initialize(
+            ProgramDataManager programDataManager,
+            TvInputManagerHelper tvInputManagerHelper,
+            LegacyFlags legacyFlags) {
+        initialize(programDataManager, tvInputManagerHelper, legacyFlags, null);
+    }
 
     public void initialize(
             ProgramDataManager programDataManager,
             TvInputManagerHelper tvInputManagerHelper,
-            LegacyFlags mLegacyFlags) {
+            LegacyFlags legacyFlags,
+            TvInteractiveAppView tvIAppView) {
         mTvView = findViewById(R.id.tv_view);
-        mTvView.setUseSecureSurface(!BuildConfig.ENG && !mLegacyFlags.enableDeveloperFeatures());
+        mTvView.setUseSecureSurface(!BuildConfig.ENG && !legacyFlags.enableDeveloperFeatures());
 
         mProgramDataManager = programDataManager;
         mInputManagerHelper = tvInputManagerHelper;
         mContentRatingsManager = tvInputManagerHelper.getContentRatingsManager();
         mParentalControlSettings = tvInputManagerHelper.getParentalControlSettings();
+        mTvIAppView = tvIAppView;
         if (mInputSessionManager != null) {
             mTvViewSession = mInputSessionManager.createTvViewSession(mTvView, this, mCallback);
         } else {
@@ -1007,6 +1017,9 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
                 return;
             }
             mBlockScreenView.setVisibility(VISIBLE);
+            if (mTvIAppView != null) {
+                mTvIAppView.setVisibility(INVISIBLE);
+            }
             mBlockScreenView.setBackgroundImage(null);
             if (blockReason == VIDEO_UNAVAILABLE_REASON_SCREEN_BLOCKED) {
                 mBlockScreenView.setIconVisibility(true);
@@ -1037,6 +1050,9 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
             mBufferingSpinnerView.setVisibility(GONE);
             if (mBlockScreenView.getVisibility() == VISIBLE) {
                 mBlockScreenView.fadeOut();
+            }
+            if (mTvIAppView != null) {
+                mTvIAppView.setVisibility(VISIBLE);
             }
         }
     }
