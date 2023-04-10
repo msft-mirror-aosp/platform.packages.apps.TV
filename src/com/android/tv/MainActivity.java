@@ -42,6 +42,7 @@ import android.media.tv.TvInputManager;
 import android.media.tv.TvInputManager.TvInputCallback;
 import android.media.tv.TvTrackInfo;
 import android.media.tv.TvView.OnUnhandledInputEventListener;
+import android.media.tv.interactive.TvInteractiveAppView;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -554,8 +555,10 @@ public class MainActivity extends Activity
             return;
         }
         setContentView(R.layout.activity_tv);
+        TvInteractiveAppView tvInteractiveAppView = findViewById(R.id.tv_app_view);
         mTvView = findViewById(R.id.main_tunable_tv_view);
-        mTvView.initialize(mProgramDataManager, mTvInputManagerHelper, mLegacyFlags);
+        mTvView.initialize(
+                mProgramDataManager, mTvInputManagerHelper, mLegacyFlags, tvInteractiveAppView);
         mTvView.setOnUnhandledInputEventListener(
                 new OnUnhandledInputEventListener() {
                     @Override
@@ -726,8 +729,8 @@ public class MainActivity extends Activity
         mAudioCapabilitiesReceiver = new AudioCapabilitiesReceiver(this, null);
         mAudioCapabilitiesReceiver.register();
         Intent nowPlayingIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent =
-                PendingIntent.getActivity(this, REQUEST_CODE_NOW_PLAYING, nowPlayingIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, REQUEST_CODE_NOW_PLAYING,
+                 nowPlayingIntent, PendingIntent.FLAG_IMMUTABLE);
         mMediaSessionWrapper = new MediaSessionWrapper(this, pendingIntent);
 
         mTvViewUiManager.restoreDisplayMode(false);
