@@ -9,9 +9,9 @@ android_test {
     srcs: ["src/**/*.java"],
     static_libs: [
         "androidx.test.runner",
+        "androidx.test.uiautomator_uiautomator",
         "tv-test-common",
         "ub-janktesthelper",
-        "ub-uiautomator",
     ],
     libs: ["android.test.base.stubs"],
     instrumentation_for: "LiveTv",
