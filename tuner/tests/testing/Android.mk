@@ -12,7 +12,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     tv-guava-android-jar \
     mockito-robolectric-prebuilt \
     tv-lib-truth \
-    ub-uiautomator \
+    androidx.test.uiautomator_uiautomator \
 
 # Link tv-common as shared library to avoid the problem of initialization of the constants
 LOCAL_JAVA_LIBRARIES := tv-common
