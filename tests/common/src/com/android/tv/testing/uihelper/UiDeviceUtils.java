@@ -15,9 +15,9 @@
  */
 package com.android.tv.testing.uihelper;
 
-import android.support.test.uiautomator.Direction;
-import android.support.test.uiautomator.UiDevice;
 import android.view.KeyEvent;
+import androidx.test.uiautomator.Direction;
+import androidx.test.uiautomator.UiDevice;
 
 /** Static utility methods for {@link UiDevice}. */
 public final class UiDeviceUtils {

@@ -19,8 +19,8 @@ import static com.android.tv.testing.uihelper.UiDeviceAsserts.assertWaitForCondi
 
 import android.support.test.jank.GfxMonitor;
 import android.support.test.jank.JankTest;
-import android.support.test.uiautomator.Until;
 import androidx.test.filters.MediumTest;
+import androidx.test.uiautomator.Until;
 import com.android.tv.R;
 import com.android.tv.testing.uihelper.ByResource;
 import com.android.tv.testing.uihelper.Constants;

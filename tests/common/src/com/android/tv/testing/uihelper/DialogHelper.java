@@ -21,9 +21,9 @@ import static com.android.tv.testing.uihelper.UiDeviceAsserts.waitForCondition;
 
 import android.app.DialogFragment;
 import android.content.res.Resources;
-import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.Until;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.Until;
 import com.android.tv.R;
 
 /** Helper for testing {@link DialogFragment}s. */

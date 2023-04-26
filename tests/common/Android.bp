@@ -34,7 +34,7 @@ android_library {
         "tv-guava-android-jar",
         "mockito-robolectric-prebuilt",
         "tv-lib-truth",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "Robolectric_all-target",
     ],
 

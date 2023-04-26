@@ -16,8 +16,8 @@
 package com.android.tv.testing.uihelper;
 
 import android.graphics.Point;
-import android.support.test.uiautomator.Direction;
-import android.support.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.Direction;
+import androidx.test.uiautomator.UiObject2;
 
 /** Static utility methods for {@link UiObject2}s. */
 public class UiObject2Utils {
