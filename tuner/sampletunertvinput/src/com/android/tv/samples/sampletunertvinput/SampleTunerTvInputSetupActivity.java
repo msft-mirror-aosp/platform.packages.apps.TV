@@ -46,6 +46,7 @@ public class SampleTunerTvInputSetupActivity extends Activity {
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
         if (mTuner != null) {
             mTuner.close();
             mTuner = null;
