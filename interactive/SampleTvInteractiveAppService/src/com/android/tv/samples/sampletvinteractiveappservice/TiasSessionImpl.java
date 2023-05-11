@@ -16,39 +16,54 @@
 
 package com.android.tv.samples.sampletvinteractiveappservice;
 
+import android.annotation.TargetApi;
 import android.app.Presentation;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaPlayer;
+import android.media.tv.AdRequest;
+import android.media.tv.AdResponse;
 import android.media.tv.BroadcastInfoRequest;
 import android.media.tv.BroadcastInfoResponse;
 import android.media.tv.SectionRequest;
 import android.media.tv.SectionResponse;
 import android.media.tv.StreamEventRequest;
 import android.media.tv.StreamEventResponse;
+import android.media.tv.TableRequest;
+import android.media.tv.TableResponse;
 import android.media.tv.TvTrackInfo;
+import android.media.tv.interactive.AppLinkInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppService;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.ParcelFileDescriptor;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
 
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -63,6 +78,7 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
     private static final int MAX_HANDLED_RESPONSE = 3;
 
     private final Context mContext;
+    private TvInteractiveAppManager mTvIAppManager;
     private final Handler mHandler;
     private final String mAppServiceId;
     private final int mType;
@@ -79,6 +95,11 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
     private TextView mLogView;
 
     private VideoView mVideoView;
+    private SurfaceView mAdSurfaceView;
+    private Surface mAdSurface;
+    private ParcelFileDescriptor mAdFd;
+    private FrameLayout mMediaContainer;
+    private int mAdState;
     private int mWidth;
     private int mHeight;
     private int mScreenWidth;
@@ -103,9 +124,65 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         mAppServiceId = iAppServiceId;
         mType = type;
         mHandler = new Handler(context.getMainLooper());
+        mTvIAppManager = (TvInteractiveAppManager) mContext.getSystemService(
+                Context.TV_INTERACTIVE_APP_SERVICE);
 
         mViewContainer = new LinearLayout(context);
         mViewContainer.setBackground(new ColorDrawable(0));
+    }
+
+    @Override
+    public View onCreateMediaView() {
+        mAdSurfaceView = new SurfaceView(mContext);
+        if (DEBUG) {
+            Log.d(TAG, "create surfaceView");
+        }
+        mAdSurfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        mAdSurfaceView
+                .getHolder()
+                .addCallback(
+                        new SurfaceHolder.Callback() {
+                            @Override
+                            public void surfaceCreated(SurfaceHolder holder) {
+                                mAdSurface = holder.getSurface();
+                            }
+
+                            @Override
+                            public void surfaceChanged(
+                                    SurfaceHolder holder, int format, int width, int height) {
+                                mAdSurface = holder.getSurface();
+                            }
+
+                            @Override
+                            public void surfaceDestroyed(SurfaceHolder holder) {}
+                        });
+        mAdSurfaceView.setVisibility(View.INVISIBLE);
+        ViewGroup.LayoutParams layoutParams =
+                new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        mAdSurfaceView.setLayoutParams(layoutParams);
+        mMediaContainer.addView(mVideoView);
+        mMediaContainer.addView(mAdSurfaceView);
+        return mMediaContainer;
+    }
+
+    @Override
+    public void onAdResponse(AdResponse adResponse) {
+        mAdState = adResponse.getResponseType();
+        switch (mAdState) {
+            case AdResponse.RESPONSE_TYPE_PLAYING:
+                long time = adResponse.getElapsedTimeMillis();
+                updateLogText("AD is playing. " + time);
+                break;
+            case AdResponse.RESPONSE_TYPE_STOPPED:
+                updateLogText("AD is stopped.");
+                mAdSurfaceView.setVisibility(View.INVISIBLE);
+                break;
+            case AdResponse.RESPONSE_TYPE_FINISHED:
+                updateLogText("AD is play finished.");
+                mAdSurfaceView.setVisibility(View.INVISIBLE);
+                break;
+        }
     }
 
     @Override
@@ -270,6 +347,65 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
                 mSectionReceived = 0;
                 requestSection(false, 0, 0x0, -1);
                 return true;
+            case KeyEvent.KEYCODE_I:
+                if (mTvIAppManager == null) {
+                    updateLogText("TvIAppManager null");
+                    return false;
+                }
+                List<AppLinkInfo> appLinks = getAppLinkInfoList();
+                if (appLinks.isEmpty()) {
+                    updateLogText("Not found AppLink");
+                } else {
+                    AppLinkInfo appLink = appLinks.get(0);
+                    Intent intent = new Intent();
+                    intent.setComponent(appLink.getComponentName());
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.getApplicationContext().startActivity(intent);
+                    updateLogText("Launch " + appLink.getComponentName());
+                }
+                return true;
+            case KeyEvent.KEYCODE_J:
+                updateLogText("Request SI Tables ");
+                // Network Information Table (NIT)
+                requestTable(false, 0x40, /* TableRequest.TABLE_NAME_NIT */ 3, -1);
+                // Service Description Table (SDT)
+                requestTable(false, 0x42, /* TableRequest.TABLE_NAME_SDT */ 5, -1);
+                // Event Information Table (EIT)
+                requestTable(false, 0x4e, /* TableRequest.TABLE_NAME_EIT */ 6, -1);
+                return true;
+            case KeyEvent.KEYCODE_K:
+                updateLogText("Request Video Bounds");
+                requestCurrentVideoBoundsWrapper();
+                return true;
+            case KeyEvent.KEYCODE_L: {
+                updateLogText("stop video broadcast with blank mode");
+                Bundle params = new Bundle();
+                params.putInt(
+                        /* TvInteractiveAppService.COMMAND_PARAMETER_KEY_STOP_MODE */
+                        "command_stop_mode",
+                        /* TvInteractiveAppService.COMMAND_PARAMETER_VALUE_STOP_MODE_BLANK */
+                        1);
+                tuneChannelByType(TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_STOP,
+                        mCurrentTvInputId, null, params);
+                return true;
+            }
+            case KeyEvent.KEYCODE_M: {
+                updateLogText("stop video broadcast with freeze mode");
+                Bundle params = new Bundle();
+                params.putInt(
+                        /* TvInteractiveAppService.COMMAND_PARAMETER_KEY_STOP_MODE */
+                        "command_stop_mode",
+                        /* TvInteractiveAppService.COMMAND_PARAMETER_VALUE_STOP_MODE_FREEZE */
+                        2);
+                tuneChannelByType(TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_STOP,
+                        mCurrentTvInputId, null, params);
+                return true;
+            }
+            case KeyEvent.KEYCODE_N: {
+                updateLogText("request AD");
+                requestAd();
+                return true;
+            }
             default:
                 return super.onKeyDown(keyCode, event);
         }
@@ -287,6 +423,12 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
             case KeyEvent.KEYCODE_F:
             case KeyEvent.KEYCODE_G:
             case KeyEvent.KEYCODE_H:
+            case KeyEvent.KEYCODE_I:
+            case KeyEvent.KEYCODE_J:
+            case KeyEvent.KEYCODE_K:
+            case KeyEvent.KEYCODE_L:
+            case KeyEvent.KEYCODE_M:
+            case KeyEvent.KEYCODE_N:
                 return true;
             default:
                 return super.onKeyUp(keyCode, event);
@@ -418,8 +560,8 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         );
     }
 
-    private void tuneChannelByType(String type, String inputId, Uri channelUri) {
-        Bundle parameters = new Bundle();
+    private void tuneChannelByType(String type, String inputId, Uri channelUri, Bundle bundle) {
+        Bundle parameters = bundle == null ? new Bundle() : bundle;
         if (TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_TUNE.equals(type)) {
             parameters.putString(
                     TvInteractiveAppService.COMMAND_PARAMETER_KEY_CHANNEL_URI,
@@ -436,6 +578,10 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
                 },
                 1000
         );
+    }
+
+    private void tuneChannelByType(String type, String inputId, Uri channelUri) {
+        tuneChannelByType(type, inputId, channelUri, new Bundle());
     }
 
     private void tuneToNextChannel() {
@@ -486,6 +632,14 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
             Log.d(TAG, "onTrackSelected type=" + type + " trackId=" + trackId);
         }
         updateTrackSelectedView(type, trackId);
+
+        if (TextUtils.equals(mSelectingAudioTrackId, trackId)) {
+            if (mSelectingAudioTrackId == null) {
+                updateLogText("unselect audio succeed");
+            } else {
+                updateLogText("select audio succeed");
+            }
+        }
     }
 
     @Override
@@ -503,6 +657,11 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
     }
 
     @Override
+    public void onCurrentVideoBounds(@NonNull Rect bounds) {
+        updateLogText("Received video Bounds " + bounds.toShortString());
+    }
+
+    @Override
     public void onBroadcastInfoResponse(BroadcastInfoResponse response) {
         if (mGeneratedRequestId == response.getRequestId()) {
             if (!mRequestStreamEventFinished && response instanceof StreamEventResponse) {
@@ -510,6 +669,8 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
             } else if (mSectionReceived < MAX_HANDLED_RESPONSE
                     && response instanceof SectionResponse) {
                 handleSectionResponse((SectionResponse) response);
+            } else if (response instanceof TableResponse) {
+                handleTableResponse((TableResponse) response);
             }
         }
     }
@@ -555,6 +716,18 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         }
     }
 
+    private void handleTableResponse(TableResponse response) {
+        updateLogText(
+                "Received table data version = "
+                        + response.getVersion()
+                        + ", size="
+                        + response.getSize()
+                        + ", requestId="
+                        + response.getRequestId()
+                        + ", data = "
+                        + Arrays.toString(getTableByteArray(response)));
+    }
+
     private void selectTrack(int type, String trackId) {
         Bundle params = new Bundle();
         params.putInt(TvInteractiveAppService.COMMAND_PARAMETER_KEY_TRACK_TYPE, type);
@@ -570,7 +743,7 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         return ++mGeneratedRequestId;
     }
 
-    public void requestStreamEvent(String targetUri, String eventName) {
+    private void requestStreamEvent(String targetUri, String eventName) {
         if (targetUri == null) {
             return;
         }
@@ -584,7 +757,7 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
         requestBroadcastInfo(request);
     }
 
-    public void requestSection(boolean repeat, int tsPid, int tableId, int version) {
+    private void requestSection(boolean repeat, int tsPid, int tableId, int version) {
         int requestId = generateRequestId();
         BroadcastInfoRequest request =
                 new SectionRequest(
@@ -596,5 +769,95 @@ public class TiasSessionImpl extends TvInteractiveAppService.Session {
                         tableId,
                         version);
         requestBroadcastInfo(request);
+    }
+
+    private void requestTable(boolean repeat,  int tableId, int tableName, int version) {
+        int requestId = generateRequestId();
+        BroadcastInfoRequest request =
+                new TableRequest(
+                        requestId,
+                        repeat
+                                ? BroadcastInfoRequest.REQUEST_OPTION_REPEAT
+                                : BroadcastInfoRequest.REQUEST_OPTION_AUTO_UPDATE,
+                        tableId,
+                        tableName,
+                        version);
+        requestBroadcastInfo(request);
+    }
+
+    public void requestAd() {
+        try {
+            // TODO: add the AD file to this project
+            RandomAccessFile adiFile =
+                    new RandomAccessFile(
+                            mContext.getApplicationContext().getFilesDir() + "/ad.mp4", "r");
+            mAdFd = ParcelFileDescriptor.dup(adiFile.getFD());
+        } catch (Exception e) {
+            updateLogText("open advertisement file failed. " + e.getMessage());
+            return;
+        }
+        long startTime = 20000;
+        long stopTime = startTime + 25000;
+        long echoInterval = 1000;
+        String mediaFileType = "MP4";
+        mHandler.post(
+                () -> {
+                    AdRequest adRequest;
+                    if (mAdState == AdResponse.RESPONSE_TYPE_PLAYING) {
+                        updateLogText("RequestAd stop");
+                        adRequest =
+                                new AdRequest(
+                                        mGeneratedRequestId,
+                                        AdRequest.REQUEST_TYPE_STOP,
+                                        null,
+                                        0,
+                                        0,
+                                        0,
+                                        null,
+                                        null);
+                    } else {
+                        updateLogText("RequestAd start");
+                        int requestId = generateRequestId();
+                        mAdSurfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+                        mAdSurfaceView.setVisibility(View.VISIBLE);
+                        Bundle bundle = new Bundle();
+                        bundle.putParcelable("dai_surface", mAdSurface);
+                        adRequest =
+                                new AdRequest(
+                                        requestId,
+                                        AdRequest.REQUEST_TYPE_START,
+                                        mAdFd,
+                                        startTime,
+                                        stopTime,
+                                        echoInterval,
+                                        mediaFileType,
+                                        bundle);
+                    }
+                    requestAd(adRequest);
+                });
+    }
+
+    @TargetApi(34)
+    private List<AppLinkInfo> getAppLinkInfoList() {
+        if (Build.VERSION.SDK_INT < 34 || mTvIAppManager == null) {
+            return new ArrayList<>();
+        }
+        return mTvIAppManager.getAppLinkInfoList();
+    }
+
+    @TargetApi(34)
+    private void requestCurrentVideoBoundsWrapper() {
+        if (Build.VERSION.SDK_INT < 34) {
+            return;
+        }
+        requestCurrentVideoBounds();
+    }
+
+    @TargetApi(34)
+    private byte[] getTableByteArray(TableResponse response) {
+        if (Build.VERSION.SDK_INT < 34) {
+            return null;
+        }
+        return response.getTableByteArray();
     }
 }
