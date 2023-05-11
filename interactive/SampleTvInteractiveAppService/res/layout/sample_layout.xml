@@ -59,5 +59,8 @@
         <TextView
             style="@style/overlay_text_item"
             android:id="@+id/subtitle_track_selected"/>
+        <TextView
+            style="@style/overlay_text_item"
+            android:id="@+id/log_text"/>
     </LinearLayout>
 </RelativeLayout>
