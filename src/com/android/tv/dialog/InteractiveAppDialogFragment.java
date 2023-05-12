@@ -16,10 +16,11 @@
 
 package com.android.tv.dialog;
 
+import android.annotation.TargetApi;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.media.tv.AitInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,6 +35,7 @@ import java.util.function.Function;
 
 import dagger.android.AndroidInjection;
 
+@TargetApi(Build.VERSION_CODES.TIRAMISU)
 public class InteractiveAppDialogFragment extends SafeDismissDialogFragment {
     private static final boolean DEBUG = false;
 
