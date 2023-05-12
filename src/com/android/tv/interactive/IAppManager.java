@@ -33,7 +33,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.view.InputEvent;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.android.tv.MainActivity;
 import com.android.tv.R;
@@ -87,6 +90,27 @@ public class IAppManager {
                 executor,
                 new MyInteractiveAppViewCallback()
         );
+        mTvIAppView.setOnUnhandledInputEventListener(executor,
+                inputEvent -> {
+                    if (mMainActivity.isKeyEventBlocked()) {
+                        return true;
+                    }
+                    if (inputEvent instanceof KeyEvent) {
+                        KeyEvent keyEvent = (KeyEvent) inputEvent;
+                        if (keyEvent.getAction() == KeyEvent.ACTION_DOWN
+                                && keyEvent.isLongPress()) {
+                            if (mMainActivity.onKeyLongPress(keyEvent.getKeyCode(), keyEvent)) {
+                                return true;
+                            }
+                        }
+                        if (keyEvent.getAction() == KeyEvent.ACTION_UP) {
+                            return mMainActivity.onKeyUp(keyEvent.getKeyCode(), keyEvent);
+                        } else if (keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                            return mMainActivity.onKeyDown(keyEvent.getKeyCode(), keyEvent);
+                        }
+                    }
+                    return false;
+                });
     }
 
     public void stop() {
@@ -102,6 +126,14 @@ public class IAppManager {
         if (mHeldAitInfo != null) {
             onAitInfoUpdated(mHeldAitInfo);
         }
+    }
+
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (mTvIAppView != null && mTvIAppView.getVisibility() == View.VISIBLE
+                && mTvIAppView.dispatchKeyEvent(event)){
+            return true;
+        }
+        return false;
     }
 
     public void onAitInfoUpdated(AitInfo aitInfo) {
@@ -204,7 +236,7 @@ public class IAppManager {
         @Override
         public void onPlaybackCommandRequest(String iAppServiceId, String cmdType,
                 Bundle parameters) {
-            if (mTvView == null) {
+            if (mTvView == null || cmdType == null) {
                 return;
             }
             switch (cmdType) {
@@ -271,7 +303,8 @@ public class IAppManager {
         }
 
         @Override
-        public void onStateChanged(String iAppServiceId, int state, int err) {}
+        public void onStateChanged(String iAppServiceId, int state, int err) {
+        }
 
         @Override
         public void onBiInteractiveAppCreated(String iAppServiceId, Uri biIAppUri,
@@ -281,7 +314,13 @@ public class IAppManager {
         public void onTeletextAppStateChanged(String iAppServiceId, int state) {}
 
         @Override
-        public void onSetVideoBounds(String iAppServiceId, Rect rect) {}
+        public void onSetVideoBounds(String iAppServiceId, Rect rect) {
+            if (mTvView != null) {
+                ViewGroup.MarginLayoutParams layoutParams = mTvView.getTvViewLayoutParams();
+                layoutParams.setMargins(rect.left, rect.top, rect.right, rect.bottom);
+                mTvView.setTvViewLayoutParams(layoutParams);
+            }
+        }
 
         @Override
         public void onRequestCurrentChannelUri(String iAppServiceId) {
