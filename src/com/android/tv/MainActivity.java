@@ -184,7 +184,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -260,10 +259,12 @@ public class MainActivity extends Activity
 
     static {
         SYSTEM_INTENT_FILTER.addAction(TvInputManager.ACTION_PARENTAL_CONTROLS_ENABLED_CHANGED);
-        SYSTEM_INTENT_FILTER.addAction(TvInteractiveAppManager.ACTION_APP_LINK_COMMAND);
         SYSTEM_INTENT_FILTER.addAction(Intent.ACTION_SCREEN_OFF);
         SYSTEM_INTENT_FILTER.addAction(Intent.ACTION_SCREEN_ON);
         SYSTEM_INTENT_FILTER.addAction(Intent.ACTION_TIME_CHANGED);
+        if (Build.VERSION.SDK_INT > 33) { // TIRAMISU
+            SYSTEM_INTENT_FILTER.addAction(TvInteractiveAppManager.ACTION_APP_LINK_COMMAND);
+        }
     }
 
     private static final int REQUEST_CODE_START_SETUP_ACTIVITY = 1;
