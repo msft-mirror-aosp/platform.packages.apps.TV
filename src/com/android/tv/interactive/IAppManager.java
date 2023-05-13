@@ -293,6 +293,14 @@ public class IAppManager {
                     mHandler.post(mMainActivity::channelDown);
                     break;
                 case TvInteractiveAppService.PLAYBACK_COMMAND_TYPE_STOP:
+                    int mode = 1; // TvInteractiveAppService.COMMAND_PARAMETER_VALUE_STOP_MODE_BLANK
+                    if (parameters != null) {
+                        mode = parameters.getInt(
+                                /* TvInteractiveAppService.COMMAND_PARAMETER_KEY_STOP_MODE */
+                                "command_stop_mode",
+                                /*TvInteractiveAppService.COMMAND_PARAMETER_VALUE_STOP_MODE_BLANK*/
+                                1);
+                    }
                     mHandler.post(mMainActivity::stopTv);
                     break;
                 default:
@@ -320,6 +328,21 @@ public class IAppManager {
                 layoutParams.setMargins(rect.left, rect.top, rect.right, rect.bottom);
                 mTvView.setTvViewLayoutParams(layoutParams);
             }
+        }
+
+        @Override
+        @TargetApi(34)
+        public void onRequestCurrentVideoBounds(@NonNull String iAppServiceId) {
+            mHandler.post(
+                    () -> {
+                        if (DEBUG) {
+                            Log.d(TAG, "onRequestCurrentVideoBounds service ID = "
+                                    + iAppServiceId);
+                        }
+                        Rect bounds = new Rect(mTvView.getLeft(), mTvView.getTop(),
+                                mTvView.getRight(), mTvView.getBottom());
+                        mTvIAppView.sendCurrentVideoBounds(bounds);
+                    });
         }
 
         @Override
