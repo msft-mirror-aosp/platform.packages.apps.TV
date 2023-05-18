@@ -867,7 +867,7 @@ public class MainActivity extends Activity
         mMainDurationTimer.start();
 
         applyParentalControlSettings();
-        registerReceiver(mBroadcastReceiver, SYSTEM_INTENT_FILTER);
+        registerReceiver(mBroadcastReceiver, SYSTEM_INTENT_FILTER, Context.RECEIVER_EXPORTED);
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             Intent notificationIntent = new Intent(this, NotificationService.class);
