@@ -455,7 +455,7 @@ public class MainActivity extends Activity
                 public void onLoadFinished() {
                     Debug.getTimer(Debug.TAG_START_UP_TIMER)
                             .log("MainActivity.mChannelTunerListener.onLoadFinished");
-                    mSetupUtils.markNewChannelsBrowsable();
+                    mSetupUtils.markNewChannelsBrowsableIfEnabled();
                     if (mActivityResumed) {
                         resumeTvIfNeeded();
                     }
@@ -922,7 +922,7 @@ public class MainActivity extends Activity
         }
 
         if (mChannelTuner.areAllChannelsLoaded()) {
-            mSetupUtils.markNewChannelsBrowsable();
+            mSetupUtils.markNewChannelsBrowsableIfEnabled();
             resumeTvIfNeeded();
         }
         mOverlayManager.showMenuWithTimeShiftPauseIfNeeded();
@@ -1094,7 +1094,10 @@ public class MainActivity extends Activity
         }
 
         if (channelUri == null) {
-            mChannelTuner.moveToChannel(mChannelTuner.findNearestBrowsableChannel(0));
+            if (!mChannelTuner.moveToChannel(mChannelTuner.findNearestBrowsableChannel(0))) {
+                Log.w(TAG, "No browsable channel, show setup");
+                showSettingsFragment();
+            }
         } else {
             if (TvContract.isChannelUriForPassthroughInput(channelUri)) {
                 ChannelImpl channel = ChannelImpl.createPassthroughChannel(channelUri);
@@ -1103,13 +1106,17 @@ public class MainActivity extends Activity
                 long channelId = ContentUris.parseId(channelUri);
                 Channel channel = mChannelDataManager.getChannel(channelId);
                 if (channel == null || !mChannelTuner.moveToChannel(channel)) {
-                    mChannelTuner.moveToChannel(mChannelTuner.findNearestBrowsableChannel(0));
                     Log.w(
                             TAG,
                             "The requested channel (id="
                                     + channelId
                                     + ") doesn't exist. "
                                     + "The first channel will be tuned to.");
+                    if (!mChannelTuner.moveToChannel(
+                            mChannelTuner.findNearestBrowsableChannel(0))) {
+                        Log.w(TAG, "No browsable channel, show setup");
+                        showSettingsFragment();
+                    }
                 }
             }
         }
