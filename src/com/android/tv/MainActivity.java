@@ -42,6 +42,8 @@ import android.media.tv.TvInputManager;
 import android.media.tv.TvInputManager.TvInputCallback;
 import android.media.tv.TvTrackInfo;
 import android.media.tv.TvView.OnUnhandledInputEventListener;
+import android.media.tv.interactive.TvInteractiveAppManager;
+import android.media.tv.interactive.TvInteractiveAppView;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -182,7 +184,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -261,6 +262,9 @@ public class MainActivity extends Activity
         SYSTEM_INTENT_FILTER.addAction(Intent.ACTION_SCREEN_OFF);
         SYSTEM_INTENT_FILTER.addAction(Intent.ACTION_SCREEN_ON);
         SYSTEM_INTENT_FILTER.addAction(Intent.ACTION_TIME_CHANGED);
+        if (Build.VERSION.SDK_INT > 33) { // TIRAMISU
+            SYSTEM_INTENT_FILTER.addAction(TvInteractiveAppManager.ACTION_APP_LINK_COMMAND);
+        }
     }
 
     private static final int REQUEST_CODE_START_SETUP_ACTIVITY = 1;
@@ -415,6 +419,13 @@ public class MainActivity extends Activity
                                 tune(true);
                             }
                             break;
+                        case TvInteractiveAppManager.ACTION_APP_LINK_COMMAND:
+                            if (DEBUG) {
+                                Log.d(TAG, "Received action link command");
+                            }
+                            // TODO: handle the command
+                            break;
+
                         default: // fall out
                     }
                 }
@@ -554,8 +565,10 @@ public class MainActivity extends Activity
             return;
         }
         setContentView(R.layout.activity_tv);
+        TvInteractiveAppView tvInteractiveAppView = findViewById(R.id.tv_app_view);
         mTvView = findViewById(R.id.main_tunable_tv_view);
-        mTvView.initialize(mProgramDataManager, mTvInputManagerHelper, mLegacyFlags);
+        mTvView.initialize(
+                mProgramDataManager, mTvInputManagerHelper, mLegacyFlags, tvInteractiveAppView);
         mTvView.setOnUnhandledInputEventListener(
                 new OnUnhandledInputEventListener() {
                     @Override
@@ -750,8 +763,8 @@ public class MainActivity extends Activity
     @TargetApi(Build.VERSION_CODES.TIRAMISU)
     @Override
     public void onInteractiveAppChecked(boolean checked) {
+        TvSettings.setTvIAppOn(getApplicationContext(), checked);
         if (checked) {
-            TvSettings.setTvIAppOn(getApplicationContext(), checked);
             mIAppManager.processHeldAitInfo();
         }
     }
@@ -854,7 +867,7 @@ public class MainActivity extends Activity
         mMainDurationTimer.start();
 
         applyParentalControlSettings();
-        registerReceiver(mBroadcastReceiver, SYSTEM_INTENT_FILTER);
+        registerReceiver(mBroadcastReceiver, SYSTEM_INTENT_FILTER, Context.RECEIVER_EXPORTED);
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             Intent notificationIntent = new Intent(this, NotificationService.class);
@@ -1448,6 +1461,9 @@ public class MainActivity extends Activity
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (DeveloperPreferences.LOG_KEYEVENT.get(this)) {
             Log.d(TAG, "dispatchKeyEvent(" + event + ")");
+        }
+        if (mIAppManager != null && mIAppManager.dispatchKeyEvent(event)) {
+            return true;
         }
         // If an activity is closed on a back key down event, back key down events with none zero
         // repeat count or a back key up event can be happened without the first back key down
@@ -2492,7 +2508,7 @@ public class MainActivity extends Activity
         return handled;
     }
 
-    private boolean isKeyEventBlocked() {
+    public boolean isKeyEventBlocked() {
         // If the current channel is a passthrough channel, we don't handle the key events in TV
         // activity. Instead, the key event will be handled by the passthrough TV input.
         return mChannelTuner.isCurrentChannelPassthrough();
