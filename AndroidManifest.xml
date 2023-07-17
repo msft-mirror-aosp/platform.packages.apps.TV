@@ -179,6 +179,7 @@
         </activity>
         <activity android:name="com.android.tv.SelectInputActivity"
              android:exported="true"
+             android:label="@string/select_inputs"
              android:configChanges="keyboard|keyboardHidden"
              android:launchMode="singleTask"
              android:theme="@style/Theme.SelectInputActivity">
