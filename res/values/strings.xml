@@ -420,6 +420,13 @@
 \n\nPress Right to adjust recording schedule.</item>
     </plurals>
 
+    <!-- Empty input status -->
+
+    <!-- The text used when external input source is weak signal or not connected [CHAR LIMIT=NONE] -->
+    <string name="empty_input_status_title_format"><xliff:g id="input_label" example="HDMI 1">%1$s</xliff:g> - No signal</string>
+    <!-- The text used to indicate the action when external input source is weak signal or not connected [CHAR LIMIT=NONE] -->
+    <string name="empty_input_status_info">Check the external input or select another input.</string>
+
     <!-- Channel Banner -->
     <eat-comment />
     <!-- The text used when there is no program title. [CHAR LIMIT=NONE] -->

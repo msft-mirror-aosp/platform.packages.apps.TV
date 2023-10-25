@@ -1017,6 +1017,11 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
                 return;
             }
             mBlockScreenView.setVisibility(VISIBLE);
+            if (shouldShowEmptyInputStatusBlock()){
+                // It will fade out along with mBlockScreenView when contents available
+                mBlockScreenView.setEmptyInputStatusInputInfo(mInputInfo);
+                mBlockScreenView.setEmptyInputStatusBlockVisibility(true);
+            }
             if (mTvIAppView != null) {
                 mTvIAppView.setVisibility(INVISIBLE);
             }
@@ -1253,6 +1258,13 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
                 mTvView.setStreamVolume(0);
             }
         }
+    }
+
+    private boolean shouldShowEmptyInputStatusBlock() {
+        return TvFeatures.USE_GTV_LIVETV_V2.isEnabled(getContext()) &&
+                (mVideoUnavailableReason == TvInputManager.VIDEO_UNAVAILABLE_REASON_WEAK_SIGNAL ||
+                        mVideoUnavailableReason ==
+                                CommonConstants.VIDEO_UNAVAILABLE_REASON_NOT_CONNECTED);
     }
 
     private boolean isBundledInput() {
