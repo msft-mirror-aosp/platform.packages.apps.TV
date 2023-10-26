@@ -427,6 +427,13 @@
     <!-- The text used to indicate the action when external input source is weak signal or not connected [CHAR LIMIT=NONE] -->
     <string name="empty_input_status_info">Check the external input or select another input.</string>
 
+    <!-- Input Banner -->
+    <eat-comment />
+    <!-- The text used when switching to a new input source. [CHAR LIMIT=NONE] -->
+    <string name="input_banner_v2_input_label_format"><xliff:g example="HDMI 1" id="label">%1$s</xliff:g> · <xliff:g example="Play Station" id="custom_label">%2$s</xliff:g></string>
+    <!-- The text used when switching to a new input source and provide additional video information. [CHAR LIMIT=NONE] -->
+    <string name="input_banner_v2_input_info_format"><xliff:g example="3840" id="video_width">%1$d</xliff:g> x <xliff:g example="2160" id="video_height">%2$d</xliff:g>/<xliff:g example="60" id="frame_rate">%3$.0f</xliff:g>P</string>
+
     <!-- Channel Banner -->
     <eat-comment />
     <!-- The text used when there is no program title. [CHAR LIMIT=NONE] -->
