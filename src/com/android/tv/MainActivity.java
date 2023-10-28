@@ -134,7 +134,7 @@ import com.android.tv.search.ProgramGuideSearchFragment;
 import com.android.tv.tunerinputcontroller.BuiltInTunerManager;
 import com.android.tv.ui.ChannelBannerView;
 import com.android.tv.ui.DetailsActivity;
-import com.android.tv.ui.InputBannerView;
+import com.android.tv.ui.InputBannerViewBase;
 import com.android.tv.ui.KeypadChannelSwitchView;
 import com.android.tv.ui.SelectInputView;
 import com.android.tv.ui.SelectInputView.OnInputSelectedCallback;
@@ -677,9 +677,13 @@ public class MainActivity extends Activity
                 (KeypadChannelSwitchView)
                         getLayoutInflater()
                                 .inflate(R.layout.keypad_channel_switch, sceneContainer, false);
-        InputBannerView inputBannerView =
-                (InputBannerView)
-                        getLayoutInflater().inflate(R.layout.input_banner, sceneContainer, false);
+
+
+        boolean useV2 = TvFeatures.USE_GTV_LIVETV_V2.isEnabled(this);
+        int inputBannerLayoutId = useV2 ? R.layout.input_banner_v2 : R.layout.input_banner;
+        InputBannerViewBase inputBannerView =
+                (InputBannerViewBase)
+                        getLayoutInflater().inflate(inputBannerLayoutId, sceneContainer, false);
         SelectInputView selectInputView =
                 (SelectInputView)
                         getLayoutInflater().inflate(R.layout.select_input, sceneContainer, false);
@@ -2967,6 +2971,7 @@ public class MainActivity extends Activity
                     allowAutoSelectionOfTrack ? null : getSelectedTrack(TvTrackInfo.TYPE_AUDIO));
             applyClosedCaption();
             mOverlayManager.getMenu().onStreamInfoChanged();
+            mOverlayManager.updateInputBannerIfNeeded(info);
             if (mTvView.isVideoAvailable()) {
                 mTvViewUiManager.fadeInTvView();
             }

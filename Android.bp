@@ -62,6 +62,7 @@ android_app {
     libs: ["tv-guava-android-jar"],
 
     static_libs: [
+        "androidx-constraintlayout_constraintlayout",
         "android-support-annotations",
         "android-support-compat",
         "android-support-v7-recyclerview",
