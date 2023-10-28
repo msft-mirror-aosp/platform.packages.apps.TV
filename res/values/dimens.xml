@@ -248,6 +248,15 @@
     <dimen name="shrunken_tvview_margin_start">56dp</dimen>
     <dimen name="shrunken_tvview_margin_end">32dp</dimen>
 
+    <!-- Empty input status -->
+    <dimen name="empty_input_status_block_title_text_size">28sp</dimen>
+    <dimen name="empty_input_status_block_info_text_size">16sp</dimen>
+    <dimen name="empty_input_status_block_icon_width">170dp</dimen>
+    <dimen name="empty_input_status_block_icon_height">170dp</dimen>
+    <dimen name="empty_input_status_block_icon_margin_top">100dp</dimen>
+    <dimen name="empty_input_status_block_title_margin_top">44dp</dimen>
+    <dimen name="empty_input_status_block_info_margin_top">16dp</dimen>
+
     <!-- Channel banner -->
     <dimen name="channel_banner_width">696dp</dimen>
     <dimen name="channel_banner_channel_number_large_text_size">54sp</dimen>

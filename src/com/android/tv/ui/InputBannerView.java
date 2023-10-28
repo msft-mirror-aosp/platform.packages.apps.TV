@@ -21,49 +21,38 @@ import android.media.tv.TvInputInfo;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.data.api.Channel;
 
-public class InputBannerView extends LinearLayout implements TvTransitionManager.TransitionLayout {
-    private final long mShowDurationMillis;
+public class InputBannerView extends InputBannerViewBase
+        implements TvTransitionManager.TransitionLayout {
 
-    private final Runnable mHideRunnable =
-            () ->
-                    ((MainActivity) getContext())
-                            .getOverlayManager()
-                            .hideOverlays(
-                                    TvOverlayManager.FLAG_HIDE_OVERLAYS_KEEP_DIALOG
-                                            | TvOverlayManager.FLAG_HIDE_OVERLAYS_KEEP_SIDE_PANELS
-                                            | TvOverlayManager.FLAG_HIDE_OVERLAYS_KEEP_PROGRAM_GUIDE
-                                            | TvOverlayManager.FLAG_HIDE_OVERLAYS_KEEP_MENU
-                                            | TvOverlayManager.FLAG_HIDE_OVERLAYS_KEEP_FRAGMENT);
     private TextView mInputLabelTextView;
     private TextView mSecondaryInputLabelTextView;
 
     public InputBannerView(Context context) {
-        this(context, null, 0);
+        super(context);
     }
 
     public InputBannerView(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+        super(context, attrs);
     }
 
     public InputBannerView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        mShowDurationMillis =
-                context.getResources().getInteger(R.integer.select_input_show_duration);
     }
 
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        mInputLabelTextView = (TextView) findViewById(R.id.input_label);
-        mSecondaryInputLabelTextView = (TextView) findViewById(R.id.secondary_input_label);
+        mInputLabelTextView = findViewById(R.id.input_label);
+        mSecondaryInputLabelTextView = findViewById(R.id.secondary_input_label);
     }
 
+    @Override
     public void updateLabel() {
         MainActivity mainActivity = (MainActivity) getContext();
         Channel channel = mainActivity.getCurrentChannel();
@@ -82,16 +71,5 @@ public class InputBannerView extends LinearLayout implements TvTransitionManager
             mSecondaryInputLabelTextView.setText(label);
             mSecondaryInputLabelTextView.setVisibility(View.VISIBLE);
         }
-    }
-
-    @Override
-    public void onEnterAction(boolean fromEmptyScene) {
-        removeCallbacks(mHideRunnable);
-        postDelayed(mHideRunnable, mShowDurationMillis);
-    }
-
-    @Override
-    public void onExitAction() {
-        removeCallbacks(mHideRunnable);
     }
 }
