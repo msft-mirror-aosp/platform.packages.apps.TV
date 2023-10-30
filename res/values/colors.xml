@@ -112,7 +112,6 @@
     <color name="tvview_block_image_color_filter">#99000000</color>
 
     <!-- Empty input status -->
-    <color name="empty_input_status_background_color">#FF0E0E0F</color>
     <color name="empty_input_status_icon_tint_color">#FF445664</color>
     <color name="empty_input_status_title_text_color">#FFE8F0FE</color>
     <color name="empty_input_status_info_text_color">#99D2E3FC</color>

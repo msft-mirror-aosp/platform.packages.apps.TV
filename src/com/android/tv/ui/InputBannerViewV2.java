@@ -32,12 +32,6 @@ public class InputBannerViewV2 extends InputBannerViewBase
     private static final String TAG = "InputBannerViewV2";
 
     private TextView mInputLabelTextView;
-    private TextView mInputInfoTextView;
-
-    private int mVideoWidth = 0;
-    private int mVideoHeight = 0;
-    private float mFrameRate = 0f;
-
     public InputBannerViewV2(Context context) {
         super(context);
     }
@@ -54,7 +48,6 @@ public class InputBannerViewV2 extends InputBannerViewBase
     protected void onFinishInflate() {
         super.onFinishInflate();
         mInputLabelTextView = findViewById(R.id.input_label);
-        mInputInfoTextView = findViewById(R.id.input_info);
     }
 
     @Override
@@ -87,58 +80,5 @@ public class InputBannerViewV2 extends InputBannerViewBase
             mInputLabelTextView.setText(inputLabel);
         }
 
-    }
-
-    private boolean updateInputInfoIfNeeded(StreamInfo streamInfo) {
-        if (!streamInfo.isVideoAvailable()) return false;
-
-        boolean updated = false;
-        int videoWidth = streamInfo.getVideoWidth();
-        int videoHeight = streamInfo.getVideoHeight();
-        float frameRate = streamInfo.getVideoFrameRate();
-
-        if (videoWidth != mVideoWidth) {
-            mVideoWidth = videoWidth;
-            updated = true;
-        }
-
-        if (videoHeight != mVideoHeight) {
-            mVideoHeight = videoHeight;
-            updated = true;
-        }
-
-        if (frameRate != mFrameRate) {
-            mFrameRate = frameRate;
-            updated = true;
-        }
-
-        if (updated && isInputInfoValid(videoWidth, videoHeight, frameRate)) {
-            String info = getResources().getString(
-                    R.string.input_banner_v2_input_info_format, videoWidth, videoHeight, frameRate);
-            mInputInfoTextView.setText(info);
-            return true;
-        }
-        return false;
-    }
-
-    private boolean isInputInfoValid(int videoWidth, int videoHeight, float frameRate) {
-        return videoWidth > 0 && videoHeight > 0 && frameRate > 0;
-    }
-
-    /**
-     * Loading input source video takes time and metadata could change. Provide input banner with
-     * the latest stream info for possible update.
-     */
-    @Override
-    public void onStreamInfoUpdated(StreamInfo info) {
-        super.onStreamInfoUpdated(info);
-        boolean updated = updateInputInfoIfNeeded(info);
-
-        if (updated) {
-            // users might not have time to read the updated info before it disappears,
-            // so extend the showing time if the input banner is updated
-            removeCallbacks(mHideRunnable);
-            postDelayed(mHideRunnable, mShowDurationMillis);
-        }
     }
 }
