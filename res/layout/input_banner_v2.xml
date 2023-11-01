@@ -24,60 +24,41 @@
     android:layout_marginStart="24dp"
     android:layout_marginTop="24dp"
     android:background="@drawable/input_banner_v2_background"
+    android:maxWidth="@dimen/input_banner_item_label_max_width"
+    android:minWidth="76dp"
+    android:minHeight="39dp"
+    android:orientation="vertical"
     android:elevation="8dp"
     android:focusable="false"
-    android:orientation="horizontal">
+    android:paddingStart="20dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="16dp">
 
-    <LinearLayout
-        android:id="@+id/input_label_text_container"
+    <TextView
+        android:id="@+id/input_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="18dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="18dp"
-        android:minWidth="100dp"
-        android:minHeight="39dp"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/input_label"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:ellipsize="end"
-            android:fontFamily="google-sans-medium"
-            android:gravity="start"
-            android:singleLine="true"
-            android:textColor="#E8F0FE"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/input_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginTop="4dp"
-            android:alpha="0.6"
-            android:ellipsize="end"
-            android:fontFamily="google-sans-medium"
-            android:gravity="start"
-            android:singleLine="true"
-            android:textColor="#D2E3FC"
-            android:textSize="11sp" />
-    </LinearLayout>
-
-    <ImageView
-        android:id="@+id/input_label_icon"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
         android:layout_gravity="center_vertical"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="16dp"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_input_banner_compound"
-        android:tint="#E8EAED" />
+        android:ellipsize="end"
+        android:fontFamily="google-sans-text-medium"
+        android:gravity="start"
+        android:singleLine="true"
+        android:text="@string/input_banner_v2_active_input"
+        android:textColor="#CCD2E3FC"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/input_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:fontFamily="google-sans-text-medium"
+        android:gravity="start"
+        android:singleLine="true"
+        android:textColor="#E8F0FE"
+        android:textSize="18sp" />
 
 </com.android.tv.ui.InputBannerViewV2>

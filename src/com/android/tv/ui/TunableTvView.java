@@ -1018,9 +1018,10 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
             }
             mBlockScreenView.setVisibility(VISIBLE);
             if (shouldShowEmptyInputStatusBlock()){
-                // It will fade out along with mBlockScreenView when contents available
                 mBlockScreenView.setEmptyInputStatusInputInfo(mInputInfo);
                 mBlockScreenView.setEmptyInputStatusBlockVisibility(true);
+            } else {
+                mBlockScreenView.setEmptyInputStatusBlockVisibility(false);
             }
             if (mTvIAppView != null) {
                 mTvIAppView.setVisibility(INVISIBLE);
