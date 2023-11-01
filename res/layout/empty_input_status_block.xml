@@ -20,7 +20,7 @@
     android:id="@+id/block_screen_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/empty_input_status_background_color">
+  android:background="@drawable/empty_input_background">
 
     <ImageView
         android:id="@+id/empty_input_status_icon"
@@ -37,7 +37,7 @@
         android:id="@+id/empty_input_status_title_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="google-sans-regular"
+        android:fontFamily="google-sans-text-regular"
         android:textColor="@color/empty_input_status_title_text_color"
         android:textSize="@dimen/empty_input_status_block_title_text_size"
         android:text="@string/empty_input_status_title_format"
@@ -50,6 +50,7 @@
         android:id="@+id/empty_input_status_info_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:fontFamily="google-sans-text-regular"
         android:textColor="@color/empty_input_status_info_text_color"
         android:textSize="@dimen/empty_input_status_block_info_text_size"
         android:text="@string/empty_input_status_info"
