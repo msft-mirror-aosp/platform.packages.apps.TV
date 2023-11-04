@@ -425,12 +425,12 @@
     <!-- The text used when external input source is weak signal or not connected [CHAR LIMIT=NONE] -->
     <string name="empty_input_status_title_format"><xliff:g id="input_label" example="HDMI 1">%1$s</xliff:g> - No signal</string>
     <!-- The text used to indicate the action when external input source is weak signal or not connected [CHAR LIMIT=NONE] -->
-    <string name="empty_input_status_info">Check the external input or select another input</string>
+    <string name="empty_input_status_info">Check the connection or select a different input source</string>
 
     <!-- Input Banner -->
     <eat-comment />
-    <!-- The text used to how in the input banner [CHAR LIMIT=NONE] -->
-    <string name="input_banner_v2_active_input">Current active input</string>
+    <!-- The text used to show in the input banner [CHAR LIMIT=NONE] -->
+    <string name="input_banner_v2_active_input">Active input</string>
     <!-- The text used when switching to a new input source. [CHAR LIMIT=NONE] -->
     <string name="input_banner_v2_input_label_format"><xliff:g example="HDMI 1" id="label">%1$s</xliff:g> · <xliff:g example="Play Station" id="custom_label">%2$s</xliff:g></string>
 
