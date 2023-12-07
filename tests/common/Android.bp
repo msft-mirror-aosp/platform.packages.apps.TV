@@ -52,3 +52,28 @@ android_library {
     },
 
 }
+
+android_library {
+    name: "tv-test-common-robo",
+    srcs: [
+        "src/com/android/tv/testing/robo/**/*.java",
+        "src/com/android/tv/testing/shadows/**/*.java",
+    ],
+    static_libs: [
+        "robolectric_android-all-stub",
+        "Robolectric_all-target",
+        "mockito-robolectric-prebuilt",
+        "tv-test-common",
+    ],
+    // Disable dexpreopt and <uses-library> check for test.
+    enforce_uses_libs: false,
+    dex_preopt: {
+        enabled: false,
+    },
+    resource_dirs: [
+        "res",
+    ],
+    libs: [
+        "LiveTv",
+    ],
+}
