@@ -27,7 +27,7 @@ android_test {
     srcs: ["unit/src/**/*.java"],
     static_libs: [
         "androidx.test.runner",
-        "mockito-robolectric-prebuilt",
+        "mockito-target",
         "tv-test-common",
     ],
     libs: [
