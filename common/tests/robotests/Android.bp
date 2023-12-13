@@ -28,9 +28,6 @@ android_robolectric_test {
     ],
     java_resource_dirs: ["config"],
     libs: [
-        "robolectric_android-all-stub",
-        "Robolectric_all-target",
-        "mockito-robolectric-prebuilt",
         "diffutils-prebuilt-jar",
     ],
     static_libs: [
@@ -47,4 +44,5 @@ android_robolectric_test {
     test_options: {
         timeout: 36000,
     },
+    upstream: true,
 }

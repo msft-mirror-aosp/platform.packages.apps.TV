@@ -35,7 +35,7 @@ android_library {
         "mockito-robolectric-prebuilt",
         "tv-lib-truth",
         "androidx.test.uiautomator_uiautomator",
-        "Robolectric_all-target",
+        "Robolectric_all-target_upstream",
     ],
 
     // Link tv-common as shared library to avoid the problem of initialization of the constants
