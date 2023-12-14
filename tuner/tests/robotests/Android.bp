@@ -27,11 +27,6 @@ android_robolectric_test {
         "javatests/**/*.java",
     ],
     java_resource_dirs: ["config"],
-    libs: [
-        "robolectric_android-all-stub",
-        "Robolectric_all-target",
-        "mockito-robolectric-prebuilt",
-    ],
     static_libs: [
         "tv-lib-dagger",
         "androidx.test.core",
@@ -48,4 +43,5 @@ android_robolectric_test {
     test_options: {
         timeout: 36000,
     },
+    upstream: true,
 }

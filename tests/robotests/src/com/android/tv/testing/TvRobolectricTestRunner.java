@@ -44,7 +44,6 @@ public class TvRobolectricTestRunner extends RobolectricTestRunner {
      * We are going to create our own custom manifest so that we can add multiple resource paths to
      * it. This lets us access resources in both Settings and SettingsLib in our tests.
      */
-    @Override
     protected AndroidManifest getAppManifest(Config config) {
         final String packageName = "com.android.tv";
 
