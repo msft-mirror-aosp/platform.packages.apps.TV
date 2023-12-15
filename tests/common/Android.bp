@@ -61,7 +61,7 @@ android_library {
     ],
     static_libs: [
         "robolectric_android-all-stub",
-        "Robolectric_all-target",
+        "Robolectric_all-target_upstream",
         "mockito-robolectric-prebuilt",
         "tv-test-common",
     ],
