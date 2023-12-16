@@ -35,7 +35,7 @@ android_library {
         "mockito-robolectric-prebuilt",
         "tv-lib-truth",
         "androidx.test.uiautomator_uiautomator",
-        "Robolectric_all-target",
+        "Robolectric_all-target_upstream",
     ],
 
     // Link tv-common as shared library to avoid the problem of initialization of the constants
@@ -51,4 +51,29 @@ android_library {
         local_include_dirs: ["src"],
     },
 
+}
+
+android_library {
+    name: "tv-test-common-robo",
+    srcs: [
+        "src/com/android/tv/testing/robo/**/*.java",
+        "src/com/android/tv/testing/shadows/**/*.java",
+    ],
+    static_libs: [
+        "robolectric_android-all-stub",
+        "Robolectric_all-target",
+        "mockito-robolectric-prebuilt",
+        "tv-test-common",
+    ],
+    // Disable dexpreopt and <uses-library> check for test.
+    enforce_uses_libs: false,
+    dex_preopt: {
+        enabled: false,
+    },
+    resource_dirs: [
+        "res",
+    ],
+    libs: [
+        "LiveTv",
+    ],
 }
