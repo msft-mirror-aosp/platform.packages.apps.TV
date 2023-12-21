@@ -41,18 +41,18 @@ android_library {
     ],
 
     static_libs: [
-            "androidx.legacy_legacy-support-core-ui",
-            "androidx.appcompat_appcompat",
-            "androidx.preference_preference",
-            "androidx.leanback_leanback",
-            "androidx.tvprovider_tvprovider",
-            "tv-guava-android-jar",
-            "tv-guava-failureaccess-jar",
-            "jsr330",
-            "tv-lib-dagger",
-            "tv-lib-exoplayer",
-            "tv-lib-exoplayer-v2-core",
-            "tv-lib-dagger-android",
+        "androidx.legacy_legacy-support-core-ui",
+        "androidx.appcompat_appcompat",
+        "androidx.preference_preference",
+        "androidx.leanback_leanback",
+        "androidx.tvprovider_tvprovider",
+        "tv-guava-android-jar",
+        "tv-guava-failureaccess-jar",
+        "jsr330",
+        "tv-lib-dagger",
+        "tv-lib-exoplayer",
+        "tv-lib-exoplayer-v2-core",
+        "tv-lib-dagger-android",
     ],
 
     plugins: [
@@ -62,8 +62,10 @@ android_library {
         "tv-lib-dagger-compiler",
     ],
 
-
     min_sdk_version: "23",
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 
     // TODO(b/77284273): generate build config after dagger supports libraries
     //include $(LOCAL_PATH)/buildconfig.mk
