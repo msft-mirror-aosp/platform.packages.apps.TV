@@ -113,6 +113,9 @@ android_app {
         "--extra-packages",
         "com.android.tv.common",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 prebuilt_etc {
