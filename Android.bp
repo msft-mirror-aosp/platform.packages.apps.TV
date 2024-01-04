@@ -123,12 +123,18 @@ android_app {
     name: "LiveTv",
     defaults: ["LiveTv_defaults"],
     additional_manifests: ["AndroidManifest_all_inputs.xml"],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 android_app {
     name: "LiveTvNonPassthrough",
     defaults: ["LiveTv_defaults"],
     additional_manifests: ["AndroidManifest_non_passthrough.xml"],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 prebuilt_etc {
