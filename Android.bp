@@ -114,9 +114,6 @@ java_defaults {
         "--extra-packages",
         "com.android.tv.common",
     ],
-    lint: {
-        baseline_filename: "lint-baseline.xml",
-    },
 }
 
 android_app {
