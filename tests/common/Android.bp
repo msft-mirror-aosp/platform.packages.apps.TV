@@ -60,7 +60,6 @@ android_library {
         "src/com/android/tv/testing/shadows/**/*.java",
     ],
     static_libs: [
-        "robolectric_android-all-stub",
         "Robolectric_all-target_upstream",
         "mockito-robolectric-prebuilt",
         "tv-test-common",
