@@ -409,9 +409,17 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
                 ++inputCount;
             }
         }
-        if (inputCount < 2) {
+
+        if (inputCount < 1) {
+            Log.w(TAG, "No available input to be selected.");
             return;
         }
+
+        if (mMainActivityWrapper.isResumed() && inputCount < 2) {
+            // if no other inputs can be switched to, keep in the same input
+            return;
+        }
+
         Activity activityToHandle =
                 mMainActivityWrapper.isResumed()
                         ? mMainActivityWrapper.getMainActivity()

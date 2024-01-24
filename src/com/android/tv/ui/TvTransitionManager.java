@@ -56,7 +56,7 @@ public class TvTransitionManager extends TransitionManager {
     private final MainActivity mMainActivity;
     private final ViewGroup mSceneContainer;
     private final ChannelBannerView mChannelBannerView;
-    private final InputBannerView mInputBannerView;
+    private final InputBannerViewBase mInputBannerView;
     private final KeypadChannelSwitchView mKeypadChannelSwitchView;
     private final SelectInputView mSelectInputView;
     private final FrameLayout mEmptyView;
@@ -78,7 +78,7 @@ public class TvTransitionManager extends TransitionManager {
             MainActivity mainActivity,
             ViewGroup sceneContainer,
             ChannelBannerView channelBannerView,
-            InputBannerView inputBannerView,
+            InputBannerViewBase inputBannerView,
             KeypadChannelSwitchView keypadChannelSwitchView,
             SelectInputView selectInputView) {
         mMainActivity = mainActivity;
@@ -157,6 +157,10 @@ public class TvTransitionManager extends TransitionManager {
 
     public boolean isSelectInputActive() {
         return mCurrentScene != null && mCurrentScene == mSelectInputScene;
+    }
+
+    public boolean isInputBannerActive() {
+        return mCurrentScene != null && mCurrentScene == mInputBannerScene;
     }
 
     public void setListener(Listener listener) {
