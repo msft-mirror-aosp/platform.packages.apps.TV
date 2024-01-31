@@ -50,7 +50,7 @@ public class KeypadChannelSwitchView extends LinearLayout
         implements TvTransitionManager.TransitionLayout {
     private static final String TAG = "KeypadChannelSwitchView";
 
-    private static final int MAX_CHANNEL_NUMBER_DIGIT = 4;
+    private static final int MAX_CHANNEL_NUMBER_DIGIT = 5;
     private static final int MAX_MINOR_CHANNEL_NUMBER_DIGIT = 3;
     private static final int MAX_CHANNEL_ITEM = 8;
     private static final String CHANNEL_DELIMITERS_REGEX = "[-\\.\\s]";

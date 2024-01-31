@@ -28,8 +28,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
-import androidx.core.R;
-
+import com.android.tv.R;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.feature.Feature;
 import com.android.tv.common.feature.FeatureUtils;
