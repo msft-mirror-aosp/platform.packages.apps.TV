@@ -35,6 +35,7 @@ import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
@@ -43,6 +44,7 @@ import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.util.DurationTimer;
 import com.android.tv.data.ChannelNumber;
 import com.android.tv.data.api.Channel;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -248,13 +250,26 @@ public class KeypadChannelSwitchView extends LinearLayout
     public void onNumberKeyUp(int num) {
         // Reset typed channel number in some cases.
         if (mTypedChannelNumber.majorNumber == null) {
+            Log.i(TAG, "Channel number reset because majorNumber is null");
             mTypedChannelNumber.reset();
         } else if (!mTypedChannelNumber.hasDelimiter
                 && mTypedChannelNumber.majorNumber.length() >= MAX_CHANNEL_NUMBER_DIGIT) {
+            Log.i(
+                    TAG,
+                    "Channel number reset because majorNumber.length = "
+                            + mTypedChannelNumber.majorNumber.length()
+                            + " >= MAX_CHANNEL_NUMBER_DIGIT = "
+                            + MAX_CHANNEL_NUMBER_DIGIT);
             mTypedChannelNumber.reset();
         } else if (mTypedChannelNumber.hasDelimiter
                 && mTypedChannelNumber.minorNumber != null
                 && mTypedChannelNumber.minorNumber.length() >= MAX_MINOR_CHANNEL_NUMBER_DIGIT) {
+            Log.i(
+                    TAG,
+                    "Channel number reset because minorNumber.length = "
+                            + mTypedChannelNumber.minorNumber.length()
+                            + " >= MAX_MINOR_CHANNEL_NUMBER_DIGIT = "
+                            + MAX_MINOR_CHANNEL_NUMBER_DIGIT);
             mTypedChannelNumber.reset();
         }
 
