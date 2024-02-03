@@ -255,7 +255,9 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
     @Override
     @Nullable
     public DvrManager getDvrManager() {
-        return (CommonFeatures.DVR.isEnabled(this)) ? mDvrManager.get() : null;
+        return (CommonFeatures.DVR.isEnabled(this) && mDvrScheduleManager != null)
+                ? mDvrManager.get()
+                : null;
     }
 
     /** Returns the {@link DvrScheduleManager}. */
