@@ -15,7 +15,7 @@
  */
 package com.android.tv.tests.jank;
 
-import android.support.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiDevice;
 import com.android.tv.testing.uihelper.UiDeviceUtils;
 
 public final class Utils {

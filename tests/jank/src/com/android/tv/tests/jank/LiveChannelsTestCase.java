@@ -17,7 +17,7 @@ package com.android.tv.tests.jank;
 
 import android.content.res.Resources;
 import android.support.test.jank.JankTestBase;
-import android.support.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiDevice;
 import com.android.tv.testing.uihelper.LiveChannelsUiDeviceHelper;
 
 /** Base test case for LiveChannel jank tests. */

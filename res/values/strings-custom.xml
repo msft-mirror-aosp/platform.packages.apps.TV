@@ -27,5 +27,6 @@
         meaning="Live TV version of setup_sources_description2"
         ><xliff:g id="app_name">Live TV</xliff:g> combines the experience of traditional TV channels with streaming channels provided by apps.
 \n\nGet started by setting up the channel sources already installed. Or browse Google Play Store for more apps that offer live channels.</string>
-
+    <!-- Name of SelectInputActivity [CHAR LIMIT=NONE] -->
+    <string name="select_inputs">Inputs</string>
 </resources>
