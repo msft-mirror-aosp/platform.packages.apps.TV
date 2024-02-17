@@ -41,8 +41,14 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.item/program"/>
-                <data android:mimeType="vnd.android.cursor.dir/program"/>
+                <data android:mimeType="vnd.android.cursor.item/program"
+                      android:scheme="content"
+                      android:host="android.media.tv"
+                      android:pathPrefix="/program" />
+                <data android:mimeType="vnd.android.cursor.dir/program"
+                     android:scheme="content"
+                      android:host="android.media.tv"
+                      android:pathPrefix="/program" />
                 <data android:mimeType="vnd.android.cursor.item/channel"
                       android:scheme="content"
                       android:host="android.media.tv"
