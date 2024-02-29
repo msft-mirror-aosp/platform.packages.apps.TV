@@ -87,14 +87,6 @@
          android:theme="@style/Theme.TV"
          tools:replace="android:appComponentFactory">
 
-        <!-- providers are listed here to keep them separate from the internal versions -->
-        <provider android:name="com.android.tv.search.LocalSearchProvider"
-             android:authorities="com.android.tv.search"
-             android:enabled="true"
-             android:exported="true">
-            <meta-data android:name="SupportedSwitchActionType"
-                 android:value="CHANNEL|TVINPUT"/>
-        </provider>
         <provider android:name="com.android.tv.common.CommonPreferenceProvider"
              android:authorities="com.android.tv.common.preferences"
              android:exported="false"
