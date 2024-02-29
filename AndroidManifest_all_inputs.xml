@@ -30,6 +30,15 @@
          android:theme="@style/Theme.TV"
          tools:replace="android:appComponentFactory">
 
+        <!-- providers are listed here to keep them separate from the internal versions -->
+        <provider android:name="com.android.tv.search.LocalSearchProvider"
+            android:authorities="com.android.tv.search"
+            android:enabled="true"
+            android:exported="true">
+            <meta-data android:name="SupportedSwitchActionType"
+                android:value="CHANNEL|TVINPUT"/>
+        </provider>
+
         <activity android:name="com.android.tv.MainActivity"
              android:configChanges="keyboard|keyboardHidden|screenSize|smallestScreenSize|screenLayout|orientation"
              android:launchMode="singleTask"
