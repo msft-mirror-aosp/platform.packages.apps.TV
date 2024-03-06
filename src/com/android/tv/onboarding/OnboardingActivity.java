@@ -66,7 +66,7 @@ public class OnboardingActivity extends SetupActivity {
                 @Override
                 public void onLoadFinished() {
                     mChannelDataManager.removeListener(this);
-                    mSetupUtils.markNewChannelsBrowsable();
+                    mSetupUtils.markNewChannelsBrowsableIfEnabled();
                 }
 
                 @Override
@@ -97,9 +97,9 @@ public class OnboardingActivity extends SetupActivity {
         mInputManager = singletons.getTvInputManagerHelper();
         if (PermissionUtils.hasAccessAllEpg(this) || PermissionUtils.hasReadTvListings(this)) {
             // Make the channels of the new inputs which have been setup outside TV app
-            // browsable.
+            // browsable if enabled.
             if (mChannelDataManager.isDbLoadFinished()) {
-                mSetupUtils.markNewChannelsBrowsable();
+                mSetupUtils.markNewChannelsBrowsableIfEnabled();
             } else {
                 mChannelDataManager.addListener(mChannelListener);
             }
