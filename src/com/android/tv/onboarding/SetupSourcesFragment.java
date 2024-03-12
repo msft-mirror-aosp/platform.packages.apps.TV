@@ -313,7 +313,7 @@ public class SetupSourcesFragment extends SetupMultiPaneFragment {
                 TvInputInfo input = mInputs.get(i);
                 String inputId = input.getId();
                 String description;
-                int channelCount = mChannelDataManager.getChannelCountForInput(inputId);
+                int channelCount = mChannelDataManager.getBrowsableChannelCountForInput(inputId);
                 if (mSetupUtils.isSetupDone(inputId) || channelCount > 0) {
                     if (channelCount == 0) {
                         description = getString(R.string.setup_input_no_channels);
