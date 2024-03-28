@@ -54,12 +54,12 @@ public class TvContentRatingCacheTest {
 
     @Before
     public void setUp() {
-        mCache.performTrimMemory(ComponentCallbacks2.TRIM_MEMORY_COMPLETE);
+        mCache.performTrimMemory(ComponentCallbacks2.TRIM_MEMORY_BACKGROUND);
     }
 
     @After
     public void tearDown() {
-        mCache.performTrimMemory(ComponentCallbacks2.TRIM_MEMORY_COMPLETE);
+        mCache.performTrimMemory(ComponentCallbacks2.TRIM_MEMORY_BACKGROUND);
     }
 
     @Test
