@@ -46,10 +46,6 @@ public class ShadowTvView extends ShadowView {
     public void __constructor__(Context context, AttributeSet attrs) {
     }
 
-    @Override
-    public void __constructor__(Context context, AttributeSet attrs, int defStyleAttr) {
-    }
-
     @Implementation
     public List<TvTrackInfo> getTracks(int type) {
         return mTracks.get(type);
