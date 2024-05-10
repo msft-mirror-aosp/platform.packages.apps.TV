@@ -52,4 +52,7 @@ android_library {
         "tv-lib-dagger-compiler",
     ],
     min_sdk_version: "23",
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }

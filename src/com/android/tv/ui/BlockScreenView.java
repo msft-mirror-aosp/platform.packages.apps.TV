@@ -16,12 +16,15 @@
 
 package com.android.tv.ui;
 
+import static com.android.tv.R.animator.tvview_block_screen_fade_out;
+
 import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.media.tv.TvInputInfo;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -30,6 +33,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.TextView;
+
 import com.android.tv.R;
 import com.android.tv.ui.TunableTvView.BlockScreenType;
 
@@ -41,6 +45,8 @@ public class BlockScreenView extends FrameLayout {
     private View mSpace;
     private TextView mBlockingInfoTextView;
     private ImageView mBackgroundImageView;
+
+    private EmptyInputStatusBlockView mEmptyInputStatusBlockView;
 
     private final int mSpacingNormal;
     private final int mSpacingShrunken;
@@ -79,6 +85,7 @@ public class BlockScreenView extends FrameLayout {
         mSpace = findViewById(R.id.space);
         mBlockingInfoTextView = (TextView) findViewById(R.id.block_screen_text);
         mBackgroundImageView = (ImageView) findViewById(R.id.background_image);
+        mEmptyInputStatusBlockView = findViewById(R.id.empty_input_status_block_view);
         mFadeOut =
                 AnimatorInflater.loadAnimator(
                         getContext(), R.animator.tvview_block_screen_fade_out);
@@ -260,5 +267,13 @@ public class BlockScreenView extends FrameLayout {
 
     public void setInfoTextClickable(boolean clickable) {
         mBlockingInfoTextView.setClickable(clickable);
+    }
+
+    public void setEmptyInputStatusInputInfo(TvInputInfo inputInfo) {
+        mEmptyInputStatusBlockView.setIconAndLabelByInputInfo(inputInfo);
+    }
+
+    public void setEmptyInputStatusBlockVisibility(boolean visible) {
+        mEmptyInputStatusBlockView.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 }

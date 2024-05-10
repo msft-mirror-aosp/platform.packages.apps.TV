@@ -16,8 +16,8 @@
 package com.android.tv.testing.uihelper;
 
 import android.content.res.Resources;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.BySelector;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
 
 /** Convenience methods for creating {@link BySelector}s using resource ids. */
 public final class ByResource {

@@ -111,6 +111,11 @@
     <color name="tvview_block_text_color">#80EEEEEE</color>
     <color name="tvview_block_image_color_filter">#99000000</color>
 
+    <!-- Empty input status -->
+    <color name="empty_input_status_icon_tint_color">#FF445664</color>
+    <color name="empty_input_status_title_text_color">#FFE8F0FE</color>
+    <color name="empty_input_status_info_text_color">#99D2E3FC</color>
+
     <!-- Channel banner -->
     <color name="channel_banner_text_color">#FFEEEEEE</color>
     <color name="channel_banner_episode_text_color">#B3EEEEEE</color>
@@ -160,4 +165,8 @@
     <color name="dvr_detail_default_background_scrim">#CC000000</color>
     <color name="dvr_recording_failed_text_color">#FFCDD2</color>
     <color name="dvr_recording_conflict_text_color">#FFE082</color>
+
+    <!-- TV IAPP dialog -->
+    <color name="tv_iapp_dialog_background">#384248</color>
+    <color name="tv_iapp_dialog_text_color">#C0EEEEEE</color>
 </resources>

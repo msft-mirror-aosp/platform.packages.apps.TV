@@ -15,8 +15,8 @@
  */
 package com.android.tv.testing.uihelper;
 
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.BySelector;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
 import com.android.tv.common.CommonConstants;
 
 public final class Constants {

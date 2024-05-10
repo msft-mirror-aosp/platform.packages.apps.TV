@@ -49,12 +49,14 @@ import com.android.tv.common.ui.setup.SetupFragment;
 import com.android.tv.common.ui.setup.SetupMultiPaneFragment;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.ProgramDataManager;
+import com.android.tv.data.StreamInfo;
 import com.android.tv.dialog.DvrHistoryDialogFragment;
 import com.android.tv.dialog.FullscreenDialogFragment;
 import com.android.tv.dialog.HalfSizedDialogFragment;
 import com.android.tv.dialog.PinDialogFragment;
 import com.android.tv.dialog.RecentlyWatchedDialogFragment;
 import com.android.tv.dialog.SafeDismissDialogFragment;
+import com.android.tv.dialog.InteractiveAppDialogFragment;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.ui.browse.DvrBrowseActivity;
 import com.android.tv.guide.ProgramGuide;
@@ -198,6 +200,7 @@ public class TvOverlayManager implements AccessibilityStateChangeListener {
         AVAILABLE_DIALOG_TAGS.add(LicenseDialogFragment.DIALOG_TAG);
         AVAILABLE_DIALOG_TAGS.add(RatingsFragment.AttributionItem.DIALOG_TAG);
         AVAILABLE_DIALOG_TAGS.add(HalfSizedDialogFragment.DIALOG_TAG);
+        AVAILABLE_DIALOG_TAGS.add(InteractiveAppDialogFragment.DIALOG_TAG);
     }
 
     private final MainActivity mMainActivity;
@@ -210,6 +213,7 @@ public class TvOverlayManager implements AccessibilityStateChangeListener {
     private final SideFragmentManager mSideFragmentManager;
     private final ProgramGuide mProgramGuide;
     private final ChannelBannerView mChannelBannerView;
+    private final InputBannerViewBase mInputBannerView;
     private final KeypadChannelSwitchView mKeypadChannelSwitchView;
     private final SelectInputView mSelectInputView;
     private final ProgramGuideSearchFragment mSearchFragment;
@@ -235,7 +239,7 @@ public class TvOverlayManager implements AccessibilityStateChangeListener {
             TvOptionsManager optionsManager,
             KeypadChannelSwitchView keypadChannelSwitchView,
             ChannelBannerView channelBannerView,
-            InputBannerView inputBannerView,
+            InputBannerViewBase inputBannerView,
             SelectInputView selectInputView,
             ViewGroup sceneContainer,
             ProgramGuideSearchFragment searchFragment,
@@ -251,6 +255,7 @@ public class TvOverlayManager implements AccessibilityStateChangeListener {
         mInputManager = tvInputManager;
         mTvView = tvView;
         mChannelBannerView = channelBannerView;
+        mInputBannerView = inputBannerView;
         mKeypadChannelSwitchView = keypadChannelSwitchView;
         mSelectInputView = selectInputView;
         mSearchFragment = searchFragment;
@@ -870,6 +875,12 @@ public class TvOverlayManager implements AccessibilityStateChangeListener {
                 mChannelBannerHiddenBySideFragment = false;
                 showBanner();
             }
+        }
+    }
+
+    public void updateInputBannerIfNeeded(StreamInfo info) {
+        if (mTransitionManager.isInputBannerActive()) {
+            mInputBannerView.onStreamInfoUpdated(info);
         }
     }
 

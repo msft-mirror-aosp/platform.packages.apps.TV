@@ -17,8 +17,8 @@ package com.android.tv.testing.uihelper;
 
 import static junit.framework.Assert.assertTrue;
 
-import android.support.test.uiautomator.SearchCondition;
-import android.support.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.SearchCondition;
+import androidx.test.uiautomator.UiObject2;
 
 /** Asserts for {@link UiObject2}s. */
 public final class UiObject2Asserts {

@@ -44,7 +44,6 @@ public class TvTunerRobolectricTestRunner extends RobolectricTestRunner {
      * We are going to create our own custom manifest so that we can add multiple resource paths to
      * it.
      */
-    @Override
     protected AndroidManifest getAppManifest(Config config) {
         final String packageName = "com.android.tv.tuner";
 

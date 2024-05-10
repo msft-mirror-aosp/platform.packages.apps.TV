@@ -31,14 +31,18 @@ import android.support.annotation.UiThread;
 import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
+import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.common.singletons.HasTvInputId;
+import com.android.tv.common.util.CommonUtils;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.api.Channel;
 import com.android.tv.tunerinputcontroller.BuiltInTunerManager;
 import com.google.common.base.Optional;
+
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -59,6 +63,8 @@ public class SetupUtils {
     // Recognized inputs means that the user already knows the inputs are installed.
     private static final String PREF_KEY_RECOGNIZED_INPUTS = "recognized_inputs";
     private static final String PREF_KEY_IS_FIRST_TUNE = "is_first_tune";
+    // Whether to mark new channels to browsable.
+    private static final boolean MARK_NEW_CHANNELS_BROWSABLE = false;
 
     private final Context mContext;
     private final SharedPreferences mSharedPreferences;
@@ -128,11 +134,11 @@ public class SetupUtils {
                     boolean browsableChanged = false;
                     for (Channel channel : manager.getChannelList()) {
                         if (channel.getInputId().equals(inputId)) {
-                            if (!channel.isBrowsable()) {
+                            if (!channel.isBrowsable() && MARK_NEW_CHANNELS_BROWSABLE) {
                                 manager.updateBrowsable(channel.getId(), true, true);
                                 browsableChanged = true;
                             }
-                            if (firstChannelForInput == null) {
+                            if (firstChannelForInput == null && channel.isBrowsable()) {
                                 firstChannelForInput = channel;
                             }
                         }
@@ -150,9 +156,15 @@ public class SetupUtils {
                 });
     }
 
-    /** Marks the channels in newly installed inputs browsable. */
+    /** Marks the channels in newly installed inputs browsable if enabled. */
     @UiThread
-    public void markNewChannelsBrowsable() {
+    public void markNewChannelsBrowsableIfEnabled() {
+        // TODO(b/288499376): Handle browsable field for channels added outside Live TV app in a
+        // better way.
+        if (!MARK_NEW_CHANNELS_BROWSABLE) {
+            return;
+        }
+
         Set<String> newInputsWithChannels = new HashSet<>();
         TvSingletons singletons = TvSingletons.getSingletons(mContext);
         TvInputManagerHelper tvInputManagerHelper = singletons.getTvInputManagerHelper();
@@ -359,6 +371,52 @@ public class SetupUtils {
                         .apply();
             }
         }
+    }
+
+    /**
+     * Create a Intent to launch setup activity for {@code inputId}. The setup activity defined
+     * in the overlayable resources precedes the one defined in the corresponding TV input service.
+     */
+    @Nullable
+    public Intent createSetupIntent(Context context, TvInputInfo input) {
+        String[] componentStrings = context.getResources()
+                .getStringArray(R.array.setup_ComponentNames);
+
+        if (componentStrings != null) {
+            for (String component : componentStrings) {
+                String[] split = component.split("#");
+                if (split.length != 2) {
+                    Log.w(TAG, "Invalid component item: " + Arrays.toString(split));
+                    continue;
+                }
+
+                final String inputId = split[0].trim();
+                if (inputId.equals(input.getId())) {
+                    final String flattenedComponentName = split[1].trim();
+                    final ComponentName componentName = ComponentName
+                            .unflattenFromString(flattenedComponentName);
+                    if (componentName == null) {
+                        Log.w(TAG, "Failed to unflatten component: " + flattenedComponentName);
+                        continue;
+                    }
+
+                    final Intent overlaySetupIntent = new Intent(Intent.ACTION_MAIN);
+                    overlaySetupIntent.setComponent(componentName);
+                    overlaySetupIntent.putExtra(TvInputInfo.EXTRA_INPUT_ID, inputId);
+
+                    PackageManager pm = context.getPackageManager();
+                    if (overlaySetupIntent.resolveActivityInfo(pm, 0) == null) {
+                        Log.w(TAG, "unable to find component" + flattenedComponentName);
+                        continue;
+                    }
+
+                    Log.i(TAG, "overlay input id: " + inputId
+                            + " to setup activity: " + flattenedComponentName);
+                    return CommonUtils.createSetupIntent(overlaySetupIntent, inputId);
+                }
+            }
+        }
+        return CommonUtils.createSetupIntent(input);
     }
 
     /**
