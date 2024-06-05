@@ -20,10 +20,23 @@
      xmlns:tools="http://schemas.android.com/tools"
      package="com.android.tv">
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+        </intent>
+        <intent>
+            <action android:name="android.media.tv.TvInputService" />
+        </intent>
+        <intent>
+            <action android:name="android.media.tv.action.QUERY_CONTENT_RATING_SYSTEMS" />
+        </intent>
+    </queries>
+
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_HDMI_CEC_ACTIVE_SOURCE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.HDMI_CEC"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.MODIFY_PARENTAL_CONTROLS"/>
@@ -74,14 +87,6 @@
          android:theme="@style/Theme.TV"
          tools:replace="android:appComponentFactory">
 
-        <!-- providers are listed here to keep them separate from the internal versions -->
-        <provider android:name="com.android.tv.search.LocalSearchProvider"
-             android:authorities="com.android.tv.search"
-             android:enabled="true"
-             android:exported="true">
-            <meta-data android:name="SupportedSwitchActionType"
-                 android:value="CHANNEL|TVINPUT"/>
-        </provider>
         <provider android:name="com.android.tv.common.CommonPreferenceProvider"
              android:authorities="com.android.tv.common.preferences"
              android:exported="false"
@@ -95,10 +100,9 @@
                 <action android:name="android.intent.action.GLOBAL_BUTTON"/>
             </intent-filter>
 
-            <!--
-                             Not directly related to GlobalKeyReceiver but needed to be able to provide our
-                            content rating definitions to the system service.
-                            -->
+            <!-- Not directly related to GlobalKeyReceiver but needed to be able to provide our
+                 content rating definitions to the system service.
+            -->
             <intent-filter>
                 <action android:name="android.media.tv.action.QUERY_CONTENT_RATING_SYSTEMS"/>
             </intent-filter>
@@ -118,38 +122,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name="com.android.tv.MainActivity"
-             android:configChanges="keyboard|keyboardHidden|screenSize|smallestScreenSize|screenLayout|orientation"
-             android:launchMode="singleTask"
-             android:resizeableActivity="true"
-             android:screenOrientation="landscape"
-             android:supportsPictureInPicture="true"
-             android:theme="@style/Theme.TV.MainActivity"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-
-                <category android:name="android.intent.category.DEFAULT"/>
-
-                <data android:mimeType="vnd.android.cursor.item/channel"/>
-                <data android:mimeType="vnd.android.cursor.dir/channel"/>
-                <data android:mimeType="vnd.android.cursor.item/program"/>
-                <data android:mimeType="vnd.android.cursor.dir/program"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.media.tv.action.SETUP_INPUTS"/>
-
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH"/>
-            </intent-filter>
-
-            <meta-data android:name="supports_leanback"
-                 android:value="true"/>
-            <meta-data android:name="android.app.searchable"
-                 android:resource="@xml/searchable"/>
-        </activity>
         <activity android:name="com.android.tv.LauncherActivity"
              android:exported="false"
              android:configChanges="keyboard|keyboardHidden"
@@ -166,6 +138,7 @@
         </activity>
         <activity android:name="com.android.tv.SelectInputActivity"
              android:exported="true"
+             android:label="@string/select_inputs"
              android:configChanges="keyboard|keyboardHidden"
              android:launchMode="singleTask"
              android:theme="@style/Theme.SelectInputActivity">
@@ -278,6 +251,7 @@
             </intent-filter>
         </activity> <!-- DVR -->
         <service android:name="com.android.tv.dvr.recorder.DvrRecordingService"
+             android:foregroundServiceType="mediaPlayback"
              android:exported="false"
              android:label="@string/dvr_service_name"/>
 

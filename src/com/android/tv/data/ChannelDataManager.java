@@ -301,6 +301,22 @@ public class ChannelDataManager {
     }
 
     /**
+     * Returns the total browsable channel count for a given input.
+     *
+     * @param inputId The ID of the input.
+     */
+    public int getBrowsableChannelCountForInput(String inputId) {
+        int count = 0;
+        for (Channel channel : mData.channels) {
+            if (channel.getInputId().equals(inputId) && channel.isBrowsable()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+
+    /**
      * Checks if the channel exists in DB.
      *
      * <p>Note that the channels of the removed inputs can not be obtained from {@link #getChannel}.

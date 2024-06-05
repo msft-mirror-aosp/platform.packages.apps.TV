@@ -28,10 +28,12 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
+import com.android.tv.R;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.feature.Feature;
 import com.android.tv.common.feature.FeatureUtils;
 import com.android.tv.common.feature.FlagFeature;
+import com.android.tv.common.feature.ResourceConfigFeature;
 import com.android.tv.common.feature.Sdk;
 import com.android.tv.common.feature.TestableFeature;
 import com.android.tv.common.flags.has.HasUiFlags;
@@ -103,6 +105,10 @@ public final class TvFeatures extends CommonFeatures {
 
     /** Support for interactive applications using the TIAF **/
     public static final Feature HAS_TIAF = Sdk.AT_LEAST_T;
+
+    /** Use new components that are consistent with other Google TV styles b/302992748 */
+    public static final Feature USE_GTV_LIVETV_V2 =
+            new ResourceConfigFeature(R.bool.use_gtv_livetv_v2, false);
 
     private TvFeatures() {}
 }
