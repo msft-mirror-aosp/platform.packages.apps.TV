@@ -71,4 +71,11 @@
             android:lineSpacingExtra="@dimen/tvview_block_line_spacing_extra"
             android:textColor="@color/tvview_block_text_color" />
     </LinearLayout>
+
+    <!-- b/302992748 new config-controlled no signal page -->
+    <com.android.tv.ui.EmptyInputStatusBlockView
+        android:id="@+id/empty_input_status_block_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
 </com.android.tv.ui.BlockScreenView>

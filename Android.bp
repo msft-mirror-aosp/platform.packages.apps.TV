@@ -34,10 +34,11 @@ license {
 version_name = "1.24-asop"
 version_code = "417000452"
 
-android_app {
-    name: "LiveTv",
-
+java_defaults {
+    name: "LiveTv_defaults",
     srcs: ["src/**/*.java"],
+
+    manifest: "AndroidManifest_common.xml",
 
     // TODO(b/122608868) turn proguard back on
     optimize: {
@@ -62,6 +63,7 @@ android_app {
     libs: ["tv-guava-android-jar"],
 
     static_libs: [
+        "androidx-constraintlayout_constraintlayout",
         "android-support-annotations",
         "android-support-compat",
         "android-support-v7-recyclerview",
@@ -112,6 +114,21 @@ android_app {
         "--extra-packages",
         "com.android.tv.common",
     ],
+}
+
+android_app {
+    name: "LiveTv",
+    defaults: ["LiveTv_defaults"],
+    additional_manifests: ["AndroidManifest_all_inputs.xml"],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
+}
+
+android_app {
+    name: "LiveTvNonPassthrough",
+    defaults: ["LiveTv_defaults"],
+    additional_manifests: ["AndroidManifest_non_passthrough.xml"],
     lint: {
         baseline_filename: "lint-baseline.xml",
     },

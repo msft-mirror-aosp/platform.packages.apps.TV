@@ -34,7 +34,7 @@ android_robolectric_test {
         "tv-lib-dagger",
         "tv-lib-truth",
         "android-support-annotations",
-        "androidx.leanback_leanback-nodeps",
+        "androidx.leanback_leanback",
         "androidx.test.core",
         "androidx.test.ext.truth",
         "tv-lib-dagger-android",

@@ -63,6 +63,8 @@ public class SetupUtils {
     // Recognized inputs means that the user already knows the inputs are installed.
     private static final String PREF_KEY_RECOGNIZED_INPUTS = "recognized_inputs";
     private static final String PREF_KEY_IS_FIRST_TUNE = "is_first_tune";
+    // Whether to mark new channels to browsable.
+    private static final boolean MARK_NEW_CHANNELS_BROWSABLE = false;
 
     private final Context mContext;
     private final SharedPreferences mSharedPreferences;
@@ -132,11 +134,11 @@ public class SetupUtils {
                     boolean browsableChanged = false;
                     for (Channel channel : manager.getChannelList()) {
                         if (channel.getInputId().equals(inputId)) {
-                            if (!channel.isBrowsable()) {
+                            if (!channel.isBrowsable() && MARK_NEW_CHANNELS_BROWSABLE) {
                                 manager.updateBrowsable(channel.getId(), true, true);
                                 browsableChanged = true;
                             }
-                            if (firstChannelForInput == null) {
+                            if (firstChannelForInput == null && channel.isBrowsable()) {
                                 firstChannelForInput = channel;
                             }
                         }
@@ -154,9 +156,15 @@ public class SetupUtils {
                 });
     }
 
-    /** Marks the channels in newly installed inputs browsable. */
+    /** Marks the channels in newly installed inputs browsable if enabled. */
     @UiThread
-    public void markNewChannelsBrowsable() {
+    public void markNewChannelsBrowsableIfEnabled() {
+        // TODO(b/288499376): Handle browsable field for channels added outside Live TV app in a
+        // better way.
+        if (!MARK_NEW_CHANNELS_BROWSABLE) {
+            return;
+        }
+
         Set<String> newInputsWithChannels = new HashSet<>();
         TvSingletons singletons = TvSingletons.getSingletons(mContext);
         TvInputManagerHelper tvInputManagerHelper = singletons.getTvInputManagerHelper();
