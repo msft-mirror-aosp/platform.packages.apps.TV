@@ -18,8 +18,6 @@ package com.android.tv.tuner.testing;
 
 import org.junit.runners.model.InitializationError;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
-import org.robolectric.manifest.AndroidManifest;
 import org.robolectric.res.Fs;
 import org.robolectric.res.ResourcePath;
 
@@ -38,29 +36,6 @@ public class TvTunerRobolectricTestRunner extends RobolectricTestRunner {
     /** We don't actually want to change this behavior, so we just call super. */
     public TvTunerRobolectricTestRunner(Class<?> testClass) throws InitializationError {
         super(testClass);
-    }
-
-    /**
-     * We are going to create our own custom manifest so that we can add multiple resource paths to
-     * it.
-     */
-    protected AndroidManifest getAppManifest(Config config) {
-        final String packageName = "com.android.tv.tuner";
-
-        // By adding any resources from libraries we need the AndroidManifest, we can access
-        // them from within the parallel universe's resource loader.
-        return new AndroidManifest(
-                Fs.fromUrl(config.manifest()),
-                Fs.fromUrl(config.resourceDir()),
-                Fs.fromUrl(config.assetDir()),
-                packageName) {
-            @Override
-            public List<ResourcePath> getIncludedResourcePaths() {
-                List<ResourcePath> paths = super.getIncludedResourcePaths();
-                TvTunerRobolectricTestRunner.getIncludedResourcePaths(paths);
-                return paths;
-            }
-        };
     }
 
     public static void getIncludedResourcePaths(List<ResourcePath> paths) {
