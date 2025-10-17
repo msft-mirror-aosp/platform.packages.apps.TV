@@ -28,6 +28,7 @@
          android:label="@string/app_name"
          android:supportsRtl="true"
          android:theme="@style/Theme.TV"
+         android:enableOnBackInvokedCallback="false"
          tools:replace="android:appComponentFactory">
 
         <!-- providers are listed here to keep them separate from the internal versions -->
