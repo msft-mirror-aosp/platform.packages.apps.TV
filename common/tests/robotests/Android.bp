@@ -27,9 +27,6 @@ android_robolectric_test {
         "src/**/*.java",
     ],
     java_resource_dirs: ["config"],
-    libs: [
-        "diffutils-prebuilt-jar",
-    ],
     static_libs: [
         "tv-lib-truth",
         "androidx.test.ext.truth",

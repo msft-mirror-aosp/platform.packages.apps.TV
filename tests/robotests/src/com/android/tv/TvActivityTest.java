@@ -17,8 +17,12 @@
 package com.android.tv;
 
 import static androidx.test.ext.truth.content.IntentSubject.assertThat;
+import static org.robolectric.Shadows.shadowOf;
 
+import android.app.Application;
 import android.content.Intent;
+
+import androidx.test.core.app.ApplicationProvider;
 
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.util.Utils;
@@ -30,7 +34,6 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowApplication;
 
 /** Test for {@link TvActivity}. */
 @RunWith(RobolectricTestRunner.class)
@@ -42,7 +45,8 @@ public class TvActivityTest {
         TvActivity activity = Robolectric.setupActivity(TvActivity.class);
         Truth.assertThat(activity.isFinishing()).isTrue();
 
-        Intent nextStartedActivity = ShadowApplication.getInstance().getNextStartedActivity();
+        Intent nextStartedActivity =
+                shadowOf((Application) ApplicationProvider.getApplicationContext()).getNextStartedActivity();
         assertThat(nextStartedActivity).hasComponentClass(MainActivity.class);
         assertThat(nextStartedActivity).extras().bool(Utils.EXTRA_KEY_FROM_LAUNCHER).isTrue();
     }
