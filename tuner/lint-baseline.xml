@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.4.0-alpha01" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha01">
+<issues format="6" by="lint 8.4.0-alpha08" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha08">
+
+    <issue
+        id="NewApi"
+        message="`&lt;android.support.v4.app.CoreComponentFactory&gt;` requires API level 28 (current min is 23)"
+        errorLine1='  &lt;application tools:replace="android:appComponentFactory" android:appComponentFactory="android.support.v4.app.CoreComponentFactory"&gt;'
+        errorLine2="  ^">
+        <location
+            file="./out/soong/.intermediates/packages/apps/TV/tuner/live-tv-tuner/android_common/manifest_fixer/AndroidManifest.xml"
+            line="19"
+            column="3"/>
+    </issue>
 
     <issue
         id="NewApi"
@@ -47,7 +58,7 @@
 
     <issue
         id="NewApi"
-        message="Cast from `TvExtender` to `Extender` requires API level 26 (current min is 23)"
+        message="Implicit cast from `TvExtender` to `Extender` requires API level 26 (current min is 23)"
         errorLine1="                        .extend(new Notification.TvExtender())"
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location

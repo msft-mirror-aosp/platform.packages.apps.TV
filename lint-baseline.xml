@@ -1,5 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.4.0-alpha01" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha01">
+<issues format="6" by="lint 8.4.0-alpha08" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha08">
+
+    <issue
+        id="NewApi"
+        message="`&lt;android.support.v4.app.CoreComponentFactory&gt;` requires API level 28 (current min is 23)"
+        errorLine1="    &lt;application"
+        errorLine2="    ^">
+        <location
+            file="./out/soong/.intermediates/packages/apps/TV/LiveTv/android_common/manifest_merger/AndroidManifest.xml"
+            line="96"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="`&lt;com.android.tv.recommendation.ChannelPreviewUpdater.ChannelPreviewUpdateService&gt;` requires API level 26 (current min is 23)"
+        errorLine1="        &lt;service"
+        errorLine2="        ^">
+        <location
+            file="./out/soong/.intermediates/packages/apps/TV/LiveTv/android_common/manifest_merger/AndroidManifest.xml"
+            line="250"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="`&lt;com.android.tv.dvr.recorder.DvrRecordingService&gt;` requires API level 24 (current min is 23)"
+        errorLine1="        &lt;service"
+        errorLine2="        ^">
+        <location
+            file="./out/soong/.intermediates/packages/apps/TV/LiveTv/android_common/manifest_merger/AndroidManifest.xml"
+            line="291"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="`&lt;com.android.tv.dvr.recorder.DvrStartRecordingReceiver&gt;` requires API level 24 (current min is 23)"
+        errorLine1="        &lt;receiver"
+        errorLine2="        ^">
+        <location
+            file="./out/soong/.intermediates/packages/apps/TV/LiveTv/android_common/manifest_merger/AndroidManifest.xml"
+            line="297"
+            column="9"/>
+    </issue>
 
     <issue
         id="NewApi"
